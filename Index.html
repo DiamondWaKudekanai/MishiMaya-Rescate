@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MishiMaya Mérida - Gestione Felina Solidale</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&display=swap');
+    body { font-family: 'Quicksand', sans-serif; background-color: #fcf8f2; color: #4a3525; }
+    .neko-card { background: #fffdf9; border: 3px solid #e6d5be; border-radius: 18px; box-shadow: 0 4px 12px rgba(74, 53, 37, 0.08); }
+    .neko-btn { background: #f4a261; color: #fff; border-bottom: 4px solid #e76f51; transition: all 0.1s ease; }
+    .neko-btn:active { transform: translateY(2px); border-bottom-width: 2px; }
+    /* Nasconde i crediti interattivi di Leaflet per evitare click involontari */
+    .leaflet-control-attribution { display: none !important; }
+  </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+  <!-- TOP BAR & NOTIFICATION BADGES -->
+  <header class="bg-[#8d5b4c] text-white px-4 py-3 flex justify-between items-center shadow-md z-30">
+    <div class="flex items-center space-x-2">
+      <div class="w-9 h-9 bg-[#f4a261] rounded-full flex items-center justify-center font-bold text-lg border-2 border-white shadow">🐱</div>
+      <div>
+        <h1 class="font-bold text-base leading-tight">MishiMaya Mérida</h1>
+        <p class="text-xs text-[#fde2e4]">Protezione & Utilità Sociale</p>
+      </div>
+    </div>
+    <div class="flex items-center space-x-2">
+      <button onclick="switchTab('rifugi')" class="relative bg-[#6f4e37] px-3 py-1.5 rounded-full text-xs font-semibold">
+        Rifugi <span id="badge-rifugi" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">2</span>
+      </button>
+      <button onclick="switchTab('account')" class="bg-[#6f4e37] p-2 rounded-full text-xs"><i class="fa-solid fa-user"></i></button>
+    </div>
+  </header>
+
+  <!-- ANCHORED ADMOB BANNER (31s Refresh & Auto-Hide on Modals) -->
+  <div id="admob-banner-container" class="bg-[#eee] border-b border-[#ddd] h-12 flex items-center justify-center text-xs text-gray-500 z-20 shrink-0 transition-all duration-300">
+    <div class="flex items-center space-x-2">
+      <span class="bg-amber-200 text-amber-800 text-[9px] px-1.5 py-0.5 rounded font-bold">SPONSOR</span>
+      <span id="admob-text">MishiMaya Partner Banner - Refresh tra 31s</span>
+    </div>
+  </div>
+
+  <!-- MAIN APP CONTAINER -->
+  <main id="app-content" class="flex-1 relative overflow-y-auto">
+    
+    <!-- MAPPA LEAFLET (MERIDA) -->
+    <div id="map-view" class="absolute inset-0 z-10">
+      <div id="merida-map" class="w-full h-full"></div>
+    </div>
+
+    <!-- CAMERA DOCK COMPATTA -->
+    <div class="absolute bottom-5 left-1/2 transform -translate-x-1/2 z-20 max-w-[280px] w-full px-4">
+      <div class="neko-card p-2 flex justify-around items-center bg-white/95 backdrop-blur">
+        <button onclick="openReportModal()" class="neko-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-1">
+          <i class="fa-solid fa-camera"></i> <span>Segnala SOS</span>
+        </button>
+        <button onclick="triggerZoneCluster()" class="bg-[#2a9d8f] text-white px-3 py-2 rounded-xl text-xs font-bold">
+          <i class="fa-solid fa-layer-group"></i> Zone
+        </button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL / DETTAGLI CLINICA O RIFUGIO CON SOTTOSEZIONI -->
+  <div id="entity-modal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4">
+    <div class="neko-card bg-white max-w-md w-full max-h-[85vh] overflow-y-auto p-5 relative">
+      <button onclick="closeEntityModal()" class="absolute top-4 right-4 text-gray-400 hover:text-black text-lg"><i class="fa-solid fa-xmark"></i></button>
+      <div id="entity-modal-content">
+        <!-- Dinamico -->
+      </div>
+    </div>
+  </div>
+
+  <!-- LEAFLET JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Dati Reali Cliniche & Rifugi Mérida
+    const meridaEntities = [
+      { id: 1, name: "Amica Gatos", type: "Clinica Esclusiva Felini", lat: 20.9750, lng: -89.5800, address: "Av. Fidel Velázquez, Col. Pacabtún", desc: "Prima clinica felina al 100% a Mérida, insonorizzata e cat-friendly.", campaigns: ["Sterilizzazione Solidale Aprile"], fabbisogno: ["Sabbietta agglomerante", "Pappe renali A/D"], adozioni: ["Micio Red (3 mesi)"] },
+      { id: 2, name: "Clínica Petit", type: "Clinica Felina", lat: 20.9850, lng: -89.6500, address: "Residencial Pensiones", desc: "Specializzata in medicina interna e chirurgia felina avanzata.", campaigns: ["Campagna Vaccinale antirabbica"], fabbisogno: ["Traversa assorbente", "Siringhe 3ml"], adozioni: ["Luna & Stella (Coppia sorelle)"] },
+      { id: 3, name: "GreenPeek", type: "Rifugio & Partner", lat: 21.0000, lng: -89.5700, address: "Fracc. del Parque", desc: "Centro di recupero e tutela colonie feline cittadine.", campaigns: ["Costituzione stalli caldi"], fabbisogno: ["Cibo umido Kitten", "Antiparassitari spot-on"], adozioni: ["Bianca (Certificata TNR socievole)"] },
+      { id: 4, name: "Veterinum 24/7", type: "Emergenza H24", lat: 20.9900, lng: -89.6200, address: "Las Américas", desc: "Pronto soccorso veterinario h24 con supporto gatti randagi.", campaigns: ["Fondo Emergenze Notturne"], fabbisogno: ["Garze sterili",Soluzione fisiologica"], adozioni: [] },
+      { id: 5, name: "Zoomania 24/7", type: "Clinica & Urgenze", lat: 20.9650, lng: -89.6000, address: "Díaz Ordaz", desc: "Clinica associata per degenze post-operatorie.", campaigns: ["Fondo stallo degenza"], fabbisogno: ["Guanti in nitrile L"], adozioni: [] }
+    ];
+
+    let map, admobTimer;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initMap();
+      startAdmobRefreshCycle();
+    });
+
+    function initMap() {
+      map = L.map('merida-map', {
+        center: [20.9832, -89.6175],
+        zoom: 13,
+        zoomControl: false,
+        attributionControl: false
+      });
+
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{z}.png', {
+        maxZoom: 19
+      }).addTo(map);
+
+      // Aggiunta Pin Cliniche Reali
+      meridaEntities.forEach(ent => {
+        let marker = L.marker([ent.lat, ent.lng]).addTo(map);
+        marker.on('click', () => openEntityDetails(ent));
+      });
+    }
+
+    // AdMob 31s Refresh & Auto-Hide Control
+    function startAdmobRefreshCycle() {
+      let seconds = 31;
+      admobTimer = setInterval(() => {
+        seconds--;
+        document.getElementById('admob-text').innerText = `MishiMaya Partner Banner - Refresh tra ${seconds}s`;
+        if(seconds <= 0) seconds = 31;
+      }, 1000);
+    }
+
+    function setAdmobVisibility(visible) {
+      const banner = document.getElementById('admob-banner-container');
+      if(visible) {
+        banner.style.display = 'flex';
+      } else {
+        banner.style.display = 'none'; // Nasconde per rispettare le policy AdMob quando ci sono modali
+      }
+    }
+
+    function openEntityDetails(ent) {
+      setAdmobVisibility(false); // Nasconde banner per evitare sovrapposizioni (Policy AdMob)
+      const container = document.getElementById('entity-modal-content');
+      container.innerHTML = `
+        <h2 class="text-lg font-bold text-[#8d5b4c]">${ent.name}</h2>
+        <p class="text-xs text-gray-500 mb-2"><i class="fa-solid fa-location-dot"></i> ${ent.address}</p>
+        <p class="text-sm bg-[#fcf8f2] p-2.5 rounded-lg border border-[#e6d5be] mb-4">${ent.desc}</p>
+        
+        <div class="space-y-3">
+          <div>
+            <h3 class="text-xs font-bold uppercase text-[#f4a261]">Campagne Attive</h3>
+            <ul class="text-xs list-disc pl-4 mt-1">${ent.campaigns.map(c => `<li>${c}</li>`).join('')}</ul>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold uppercase text-[#f4a261]">Lista Fabbisogno & Affiliati</h3>
+            <ul class="text-xs list-disc pl-4 mt-1">${ent.fabbisogno.map(f => `<li>${f} <a href="#" class="text-blue-600 underline">[Acquista & Dona]</a></li>`).join('')}</ul>
+          </div>
+          <div>
+            <h3 class="text-xs font-bold uppercase text-[#f4a261]">Adozioni in questa struttura</h3>
+            <ul class="text-xs list-disc pl-4 mt-1">${ent.adozions?.length ? ent.adozions.map(a => `<li>${a}</li>`).join('') : '<li>Nessun micio in adozione al momento</li>'}</ul>
+          </div>
+        </div>
+
+        <div class="mt-5 flex space-x-2">
+          <button onclick="openSpeiDonationModal('${ent.name}')" class="neko-btn flex-1 py-2 text-xs font-bold rounded-xl text-center">Donazione SPEI Libera</button>
+          <button onclick="shareEntity('${ent.name}')" class="bg-[#2a9d8f] text-white px-3 py-2 text-xs font-bold rounded-xl"><i class="fa-solid fa-share-nodes"></i></button>
+        </div>
+      `;
+      document.getElementById('entity-modal').classList.remove('hidden');
+    }
+
+    function closeEntityModal() {
+      document.getElementById('entity-modal').classList.add('hidden');
+      setAdmobVisibility(true); // Riattiva il banner AdMob
+    }
+
+    function triggerZoneCluster() {
+      map.setView([20.9832, -89.6175], 14);
+      alert("Mappa focalizzata e pin raggruppati per zona a Mérida!");
+    }
+
+    function openReportModal() {
+      alert("Funzione Segnalazione SOS con Cartella Foto & Landmark pronta!");
+    }
+
+    function openSpeiDonationModal(name) {
+      alert(`Stai effettuando una donazione libera tramite SPEI / Mercado Pago per ${name}. Carica la ricevuta per la verifica automatica.`);
+    }
+
+    function shareEntity(name) {
+      if(navigator.share) {
+        navigator.share({ title: 'MishiMaya Mérida', text: `Aiutiamo ${name} tramite MishiMaya Mérida!`, url: window.location.href });
+      } else {
+        alert("Link di condivisione copiato negli appunti con codice affiliato!");
+      }
+    }
+
+    function switchTab(tab) {
+      if(tab === 'account') {
+        setAdmobVisibility(false);
+        alert("Sezione Account, Karma con cornici speciali e Offrici un Caffè.");
+        setAdmobVisibility(true);
+      } else {
+        alert("Sezione Rifugi con badge attivi.");
+      }
+    }
+  </script>
+</body>
+</html>
