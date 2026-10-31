@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#8C4A23" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>MishiMaya Mérida — v13.0</title>
+  <title>MishiMaya Mérida — v14.0</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
@@ -45,8 +45,15 @@
     .neko-wood-bottom { background:linear-gradient(0deg,var(--wood-dark) 0%,var(--wood-main) 100%); border-top:3.5px solid var(--outline); min-height:110px; padding-top:10px; padding-bottom:calc(28px + env(safe-area-inset-bottom)); display:flex; align-items:center; justify-content:center; }
     .neko-card { background:var(--bg-card); border:2.5px solid var(--outline); border-radius:18px; box-shadow:0 4px 0 var(--card-shadow), inset 0 2px 0 rgba(255,255,255,0.12); color:var(--text-main); }
     .neko-subcard { background:var(--bg-subcard); border:1.8px dashed var(--outline); border-radius:12px; color:var(--text-main); }
-    .neko-btn { font-family:var(--font-display); border:2px solid #2B1B10; border-radius:12px; box-shadow:0 2.5px 0 #2B1B10; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; text-align:center; line-height:1.1; transition:transform 0.14s cubic-bezier(0.34,1.56,0.64,1); }
-    .neko-btn:active { transform:translateY(2px) scale(0.97); box-shadow:0 1px 0 #2B1B10; }
+
+    @keyframes nekoBtnJelly { 0% { transform:scale(0.92); } 50% { transform:scale(1.04); } 100% { transform:scale(1); } }
+    @keyframes nekoModalPop { 0% { opacity:0; transform:scale(0.86) translateY(14px); } 70% { opacity:1; transform:scale(1.02) translateY(-2px); } 100% { opacity:1; transform:scale(1) translateY(0); } }
+    @keyframes nekoSectionFade { 0% { opacity:0; transform:translateY(8px); } 100% { opacity:1; transform:translateY(0); } }
+    .neko-btn { font-family:var(--font-display); border:2px solid #2B1B10; border-radius:12px; box-shadow:0 2.5px 0 #2B1B10; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; text-align:center; line-height:1.1; transition:transform 0.16s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.14s ease, filter 0.14s ease; }
+    .neko-btn:active { transform:translateY(2px) scale(0.93); box-shadow:0 0.5px 0 #2B1B10; filter:brightness(1.05); }
+    .neko-pop-anim { animation:nekoModalPop 0.28s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+    .neko-view-anim { animation:nekoSectionFade 0.24s cubic-bezier(0.22,1,0.36,1) forwards; }
+
     .cards-scroll-window { flex:1; overflow-y:auto; padding:12px 4px 26px 4px; position:relative; }
     #map-tab-container { position:absolute; inset:0; width:100%; height:100%; padding:6px 8px 8px 8px; display:flex; flex-direction:column; }
     #map-frame-inner { position:relative; flex:1; width:100%; height:100%; min-height:200px; border-radius:18px; border:3.5px solid var(--outline); box-shadow:0 3.5px 0 var(--card-shadow); overflow:hidden; background:#E6CCB2; }
@@ -56,40 +63,44 @@
     .neko-warm-tiles .leaflet-tile-pane { filter:sepia(0.16) saturate(1.12); }
     .leaflet-div-icon-neko { background:transparent !important; border:none !important; }
 
-    /* Pin Neko Atsume + Animazioni Distinte */
-    .neko-pin-wrap { position:relative; width:44px; height:52px; display:flex; flex-direction:column; align-items:center; cursor:pointer; filter:drop-shadow(0 3px 0 #2B1B10); perspective:400px; }
-    .neko-pin-head { width:38px; height:38px; border-radius:999px; border:2.5px solid #2B1B10; box-shadow:inset 0 2.5px 0 rgba(255,255,255,0.45); display:flex; align-items:center; justify-content:center; position:relative; z-index:2; backface-visibility:visible; }
+    .neko-pin-wrap { position:relative; width:44px; height:58px; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; cursor:pointer; filter:drop-shadow(0 3px 0 #2B1B10); perspective:400px; }
+    .neko-pin-tag { position:absolute; top:-7px; left:50%; transform:translateX(-50%); padding:1.5px 6px; border-radius:999px; background:#2B1B10; color:#FDE68A; font-family:var(--font-display); font-weight:700; font-size:7.8px; border:1.5px solid #FBBF24; box-shadow:0 1.5px 0 #2B1B10; white-space:nowrap; z-index:25; pointer-events:none; line-height:1.1; }
+    .neko-pin-head { width:38px; height:38px; border-radius:999px; border:2.5px solid #2B1B10; box-shadow:inset 0 2.5px 0 rgba(255,255,255,0.45); display:flex; align-items:center; justify-content:center; position:relative; z-index:2; backface-visibility:visible; transform-origin:center center; }
     .neko-pin-tip { width:0; height:0; border-left:7px solid transparent; border-right:7px solid transparent; border-top:10px solid #2B1B10; margin-top:-2px; z-index:1; }
     .neko-pin-dot { width:5px; height:5px; border-radius:999px; background:#FFFDF7; border:1.5px solid #2B1B10; margin-top:-2px; }
+
     @keyframes pulse-ring { 0% { transform:scale(0.95); opacity:0.95; } 100% { transform:scale(1.7); opacity:0; } }
     @keyframes sosBeat { 0%,100% { transform:scale(1); } 50% { transform:scale(1.09); } }
     @keyframes nekoTilt { 0%,100% { transform:rotate(0deg); } 25% { transform:rotate(-8deg); } 75% { transform:rotate(8deg); } }
-    @keyframes colonyHopVibrate { 0%,100% { transform:translateY(0) rotate(0deg); } 20% { transform:translateY(-6px) scale(1.04); } 35% { transform:translateY(0) rotate(-3deg); } 45% { transform:translateY(0) rotate(3deg); } 55% { transform:translateY(0) rotate(-2deg); } 65% { transform:translateY(0) rotate(0deg); } }
+    @keyframes colonyJumpOnly { 0%,100% { transform:translateY(0); } 22% { transform:translateY(-7px); } 44% { transform:translateY(0); } }
+    @keyframes colonyHeadShakeOnly { 0%,20%,70%,100% { transform:rotate(0deg); } 30% { transform:rotate(-11deg); } 40% { transform:rotate(11deg); } 50% { transform:rotate(-8deg); } 60% { transform:rotate(8deg); } }
     @keyframes clinicFlipY { 0%,70%,100% { transform:rotateY(0deg); } 85% { transform:rotateY(180deg); } }
-    @keyframes shelterBreathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.07) translateY(-2px); } }
+    @keyframes shelterCozyRock { 0%,100% { transform:translateY(0) rotate(0deg) scale(1); } 25% { transform:translateY(-3px) rotate(-5deg) scale(1.05); } 50% { transform:translateY(0) rotate(0deg) scale(1.08); } 75% { transform:translateY(-3px) rotate(5deg) scale(1.05); } }
+
     .sos-ring::before { content:''; position:absolute; inset:-5px; border-radius:999px; border:3px solid #EF4444; animation:pulse-ring 1.4s infinite ease-out; pointer-events:none; }
     .transit-ring::before { content:''; position:absolute; inset:-5px; border-radius:999px; border:3px solid #F97316; animation:pulse-ring 1.6s infinite ease-out; pointer-events:none; }
+    .shelter-ring::before { content:''; position:absolute; inset:-4px; border-radius:999px; border:2.5px solid #FBBF24; animation:pulse-ring 2.4s infinite ease-out; pointer-events:none; }
+
     .pin-anim-emergency { animation:sosBeat 1.3s infinite ease-in-out; }
     .pin-anim-sighting { animation:nekoTilt 2.8s infinite ease-in-out; transform-origin:bottom center; }
-    .pin-anim-colony { animation:colonyHopVibrate 2.6s infinite ease-in-out; }
+    .pin-anim-colony { animation:colonyJumpOnly 2.5s infinite ease-in-out; }
+    .pin-anim-colony .neko-pin-head { animation:colonyHeadShakeOnly 2.5s infinite ease-in-out; }
     .pin-anim-clinic .neko-pin-head { animation:clinicFlipY 4.5s infinite ease-in-out; }
-    .pin-anim-shelter { animation:shelterBreathe 2.8s infinite ease-in-out; }
+    .pin-anim-shelter .neko-pin-head { animation:shelterCozyRock 3s infinite ease-in-out; }
 
-    /* Nav-Bar Incastonata & Nuovo Pulsante Unico di Segnalazione a Ventaglio (Fan Menu) */
     .interlocked-dock { display:flex; align-items:center; justify-content:center; position:relative; width:100%; margin-left:auto; margin-right:auto; }
     .nav-wing-left { height:50px; border-radius:25px 0 0 25px; padding-right:26px; padding-left:14px; margin-right:-22px; z-index:1; }
     .nav-wing-right { height:50px; border-radius:0 25px 25px 0; padding-left:26px; padding-right:14px; margin-left:-22px; z-index:1; }
     .nav-center-orb { width:68px; height:68px; border-radius:9999px; z-index:3; position:relative; box-shadow:0 4px 0 #2B1B10, 0 0 0 4px var(--wood-dark); }
 
-    .fan-menu-wrap { position:relative; width:250px; height:66px; display:flex; align-items:flex-end; justify-content:center; pointer-events:none; }
-    .fan-main-orb { width:66px; height:66px; border-radius:9999px; z-index:30; pointer-events:auto; position:relative; box-shadow:0 4px 0 #2B1B10, 0 0 0 4px var(--bg-card); transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
-    .fan-item { position:absolute; bottom:8px; width:64px; height:64px; border-radius:9999px; z-index:20; opacity:0; pointer-events:none; transform:translate(0,0) scale(0.35); transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 3.5px 0 #2B1B10, 0 0 0 3px var(--bg-card); flex-direction:column; gap:2px; }
+    .fan-menu-wrap { position:relative; width:280px; height:70px; display:flex; align-items:flex-end; justify-content:center; pointer-events:none; }
+    .fan-main-orb { width:68px; height:68px; border-radius:9999px; z-index:30; pointer-events:auto; position:relative; box-shadow:0 4px 0 #2B1B10, 0 0 0 4px var(--bg-card); transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+    .fan-item { position:absolute; bottom:8px; width:58px; height:58px; border-radius:9999px; z-index:20; opacity:0; pointer-events:none; transform:translate(0,0) scale(0.3); transition:all 0.32s cubic-bezier(0.34,1.56,0.64,1); box-shadow:0 3.5px 0 #2B1B10, 0 0 0 3px var(--bg-card); flex-direction:column; gap:1px; }
     .fan-menu-wrap.open .fan-item { opacity:1; pointer-events:auto; }
-    .fan-menu-wrap.open .fan-item-left { transform:translate(-84px, -44px) scale(1); }
-    .fan-menu-wrap.open .fan-item-center { transform:translate(0px, -74px) scale(1); }
-    .fan-menu-wrap.open .fan-item-right { transform:translate(84px, -44px) scale(1); }
-    .fan-menu-wrap.open .fan-sub-link { opacity:1; pointer-events:auto; transform:translateY(-148px) scale(1); }
-    .fan-sub-link { position:absolute; bottom:6px; z-index:20; opacity:0; pointer-events:none; transform:translateY(-40px) scale(0.5); transition:all 0.28s cubic-bezier(0.34,1.56,0.64,1); }
+    .fan-menu-wrap.open .fan-toe-1 { transform:translate(-96px, -32px) scale(1); }
+    .fan-menu-wrap.open .fan-toe-2 { transform:translate(-34px, -80px) scale(1); }
+    .fan-menu-wrap.open .fan-toe-3 { transform:translate(34px, -80px) scale(1); }
+    .fan-menu-wrap.open .fan-toe-4 { transform:translate(96px, -32px) scale(1); }
 
     .flip-card { perspective:1000px; height:128px; cursor:pointer; }
     .flip-inner { position:relative; width:100%; height:100%; transition:transform 0.5s; transform-style:preserve-3d; }
@@ -119,8 +130,8 @@
     .scroll-arrow-down { animation:nudgeDown 1.2s infinite ease-in-out; }
     .scroll-arrow-up { animation:nudgeUp 1.2s infinite ease-in-out; }
 
-    /* Motore Spotlight Cutout Senza Glitch (Zero modifica position sugli elementi target!) */
-    #tour-cutout-lens { position:fixed; z-index:910; border-radius:16px; border:3.5px solid #FBBF24; box-shadow:0 0 0 9999px rgba(14, 11, 9, 0.78), 0 0 24px #FBBF24; pointer-events:none; transition:all 0.32s cubic-bezier(0.25,1,0.5,1); }
+    #tour-cutout-lens { position:fixed; z-index:910; border-radius:16px; border:3.5px solid #FBBF24; box-shadow:0 0 0 9999px rgba(14, 11, 9, 0.80), 0 0 24px #FBBF24; pointer-events:none; transition:all 0.3s cubic-bezier(0.25,1,0.5,1); }
+    .tour-lock-shield { position:fixed; z-index:912; background:transparent; pointer-events:auto; }
 
     @keyframes nekoFloatParticle { 0% { transform:translateY(20px) scale(0.6) rotate(-10deg); opacity:1; } 70% { opacity:1; } 100% { transform:translateY(-210px) scale(1.15) rotate(18deg); opacity:0; } }
     .neko-svg-particle { position:fixed; z-index:950; pointer-events:none; width:34px; height:34px; animation:nekoFloatParticle 2.1s cubic-bezier(0.22,1,0.36,1) forwards; }
@@ -129,7 +140,6 @@
 </head>
 <body>
   <div id="apk-shell" data-theme="calico">
-    <!-- TOP BAR CON ALTEZZA UNIFICATA MILLIMETRICA (h-[46px]) E 100% ICONE NEKO ATSUME -->
     <header class="neko-wood-top px-3 gap-2 z-30 shrink-0">
       <div id="top-exp-box" onclick="openKarmaExpInfoModal()" class="flex-1 h-[46px] bg-[var(--bg-card)] border-2 border-[#2B1B10] rounded-xl px-2.5 flex flex-col justify-center shadow-[0_2.5px_0_#2B1B10] cursor-pointer min-w-0">
         <div class="flex items-center justify-between text-[10px] font-neko font-bold text-[var(--text-main)] leading-none">
@@ -152,8 +162,7 @@
     <div id="admob-guard-host"></div>
 
     <main class="flex-1 relative overflow-hidden">
-      <!-- 1. SEZIONE RIFUGI -->
-      <section id="main-tab-shelters" class="hidden h-full flex flex-col p-2.5 gap-1.5 overflow-hidden relative">
+      <section id="main-tab-shelters" class="hidden h-full flex flex-col p-2.5 gap-1.5 overflow-hidden relative neko-view-anim">
         <div id="subtabs-bar-shelters" class="grid grid-cols-4 gap-1.5 bg-black/15 pt-2.5 pb-1.5 px-1.5 rounded-xl border-2 border-[var(--outline)] shrink-0">
           <button type="button" onclick="setSubTab('shelters','list')" id="subbtn-shelters-list" class="neko-btn py-1.5 text-[10px] font-bold bg-[#F97316] text-white gap-1 relative"><span id="ico-sh-1"></span><span>Refugios</span><span id="badge-sh-list" class="badge-num">1</span></button>
           <button type="button" onclick="setSubTab('shelters','adopt')" id="subbtn-shelters-adopt" class="neko-btn py-1.5 text-[10px] font-bold bg-[var(--pill-idle)] text-[var(--text-main)] gap-1 relative"><span id="ico-sh-2"></span><span>Adopción</span><span id="badge-sh-adopt" class="badge-num">1</span></button>
@@ -164,18 +173,17 @@
         <div class="flex-1 relative overflow-hidden flex flex-col">
           <button type="button" id="y-arrow-up-shelters" onclick="nudgeVerticalScroll('swipe-area-shelters', -200)" class="hidden absolute top-1.5 left-1/2 z-[410] w-7 h-7 rounded-full bg-[#2B1B10] text-amber-300 border-2 border-amber-300 flex items-center justify-center font-neko font-bold text-xs shadow-md scroll-arrow-up">⌃</button>
           <div id="swipe-area-shelters" onscroll="updateVerticalArrows(this,'y-arrow-up-shelters','y-arrow-down-shelters')" class="cards-scroll-window space-y-2.5">
-            <div id="subview-shelters-list" class="space-y-2.5"></div>
-            <div id="subview-shelters-adopt" class="hidden space-y-2.5"></div>
-            <div id="subview-shelters-campaigns" class="hidden space-y-2.5"></div>
-            <div id="subview-shelters-supplies" class="hidden space-y-2.5"></div>
+            <div id="subview-shelters-list" class="space-y-2.5 neko-view-anim"></div>
+            <div id="subview-shelters-adopt" class="hidden space-y-2.5 neko-view-anim"></div>
+            <div id="subview-shelters-campaigns" class="hidden space-y-2.5 neko-view-anim"></div>
+            <div id="subview-shelters-supplies" class="hidden space-y-2.5 neko-view-anim"></div>
           </div>
           <button type="button" id="y-arrow-down-shelters" onclick="nudgeVerticalScroll('swipe-area-shelters', 200)" class="absolute bottom-1.5 left-1/2 z-[410] w-7 h-7 rounded-full bg-[#2B1B10] text-amber-300 border-2 border-amber-300 flex items-center justify-center font-neko font-bold text-xs shadow-md scroll-arrow-down">⌄</button>
         </div>
         <div class="compact-carousel-strip" id="compact-carousel-bottom-shelters"></div>
       </section>
 
-      <!-- 2. HOME MAPPA CENTRALE -->
-      <section id="main-tab-map" class="h-full w-full relative">
+      <section id="main-tab-map" class="h-full w-full relative neko-view-anim">
         <div id="map-tab-container">
           <div id="map-frame-inner" class="neko-warm-tiles">
             <div id="merida-map"></div>
@@ -192,26 +200,24 @@
               <button type="button" id="filter-scroll-right" onclick="nudgeFiltersX(130)" class="pointer-events-auto absolute right-0 top-2.5 w-7 h-7 rounded-full bg-[#2B1B10] text-amber-300 border-2 border-amber-300 flex items-center justify-center font-neko font-bold text-xs shadow-md scroll-hint-right z-30">❯</button>
             </div>
 
-            <!-- Controlli Laterali Mappa (Fissi a destra senza mai saltare a sinistra) -->
             <div id="map-side-controls" class="absolute right-2.5 top-16 z-[480] flex flex-col gap-1.5">
-              <button type="button" id="btn-map-novelty" onclick="cycleNextMapNovelty()" class="neko-btn w-9 h-9 bg-rose-500 text-white flex-col gap-0.5 relative" title="Centrar en siguiente novedad">
+              <button type="button" id="btn-map-novelty" onclick="cycleNextMapNovelty()" class="neko-btn w-9 h-9 rounded-full bg-rose-500 text-white flex-col gap-0.5 relative" title="Centrar en siguiente novedad">
                 <span id="ico-ctrl-bell"></span>
                 <span id="gps-notif-count" class="text-[8px] font-bold leading-none">3</span>
               </button>
-              <button type="button" onclick="centerOnUserGPS(true)" class="neko-btn w-9 h-9 bg-emerald-400 text-[#2B1B10] flex-col gap-0.5" title="Mi ubicación GPS en tiempo real">
+              <button type="button" id="btn-map-gps" onclick="centerOnUserGPS(true)" class="neko-btn w-9 h-9 rounded-full bg-emerald-400 text-[#2B1B10] flex-col gap-0.5" title="Mi ubicación GPS en tiempo real">
                 <span id="ico-ctrl-gps"></span>
                 <span class="text-[6.5px] font-bold leading-none">GPS</span>
               </button>
               <button type="button" onclick="zoomMap(1)" class="neko-btn w-9 h-8 bg-[var(--bg-card)] text-[var(--text-main)] font-bold text-base">+</button>
               <button type="button" onclick="zoomMap(-1)" class="neko-btn w-9 h-8 bg-[var(--bg-card)] text-[var(--text-main)] font-bold text-base">−</button>
-              <button type="button" onclick="ClusterEngine.zoomOutOverview()" class="neko-btn w-9 h-9 bg-amber-300 text-[#2B1B10] flex-col gap-0.5">
+              <button type="button" onclick="ClusterEngine.zoomOutOverview()" class="neko-btn w-9 h-9 rounded-full bg-amber-300 text-[#2B1B10] flex-col gap-0.5">
                 <span id="ico-ctrl-zones"></span>
                 <span class="text-[7px] font-bold leading-none">Zonas</span>
               </button>
             </div>
 
-            <!-- Banner Modalità Trascinamento Pin in Primo Piano -->
-            <div id="drag-pin-banner" class="hidden absolute top-14 left-2.5 right-14 z-[495] neko-card p-2 bg-amber-200 text-[#2B1B10] flex items-center justify-between gap-2 shadow-xl">
+            <div id="drag-pin-banner" class="hidden absolute top-14 left-2.5 right-14 z-[495] neko-card p-2 bg-amber-200 text-[#2B1B10] flex items-center justify-between gap-2 shadow-xl neko-pop-anim">
               <div class="text-[10px]">
                 <p class="font-neko font-bold">Pin en primer plano: arrástralo o toca el mapa</p>
                 <p id="drag-pin-coords" class="font-mono text-[9px] font-bold">20.98650, -89.61650</p>
@@ -219,25 +225,26 @@
               <button type="button" onclick="confirmDraggedPinPosition()" class="neko-btn px-2.5 py-1.5 bg-emerald-400 text-[#2B1B10] font-bold text-[10px] shrink-0">Confirmar Punto</button>
             </div>
 
-            <div id="map-pin-card" class="hidden absolute bottom-24 left-2.5 right-2.5 z-[490] neko-card p-3 shadow-2xl"></div>
+            <div id="map-pin-card" class="hidden absolute bottom-24 left-2.5 right-2.5 z-[490] neko-card p-3 shadow-2xl neko-pop-anim"></div>
 
-            <!-- NUOVO PULSANTE UNICO DI SEGNALAZIONE CON APERTURA A VENTAGLIO (FAN MENU) -->
+            <!-- VENTAGLIO A FORMA DI ZAMPETTA DI GATTO (4 POLPASTRELLI + CUSCINETTO CENTRALE) -->
             <div class="absolute bottom-3.5 left-0 right-0 z-[450] flex justify-center pointer-events-none">
               <div id="fan-report-menu" class="fan-menu-wrap">
-                <button type="button" onclick="toggleFanReportMenu(false); openAuthAndOnboardingModal('clinic')" class="neko-btn fan-sub-link px-3 py-1 bg-emerald-300 text-[#2B1B10] font-bold text-[9.5px] gap-1">
-                  <span id="ico-fan-ent"></span><span>Sugerir Clínica / Refugio</span>
-                </button>
-                <button type="button" onclick="toggleFanReportMenu(false); openCameraReportModal('emergency')" class="neko-btn fan-item fan-item-left bg-rose-500 text-white">
+                <button type="button" onclick="toggleFanReportMenu(false); openCameraReportModal('emergency')" class="neko-btn fan-item fan-toe-1 bg-rose-500 text-white">
                   <span id="ico-fan-sos"></span>
-                  <span class="text-[9px] font-bold leading-none">SOS</span>
+                  <span class="text-[8.5px] font-bold leading-none">SOS</span>
                 </button>
-                <button type="button" onclick="toggleFanReportMenu(false); openCameraReportModal('sighting')" class="neko-btn fan-item fan-item-center bg-sky-400 text-[#2B1B10]">
+                <button type="button" onclick="toggleFanReportMenu(false); openCameraReportModal('sighting')" class="neko-btn fan-item fan-toe-2 bg-sky-400 text-[#2B1B10]">
                   <span id="ico-fan-sig"></span>
-                  <span class="text-[8.5px] font-bold leading-none">En Calle</span>
+                  <span class="text-[8px] font-bold leading-none">En Calle</span>
                 </button>
-                <button type="button" onclick="toggleFanReportMenu(false); openCameraReportModal('colony')" class="neko-btn fan-item fan-item-right bg-amber-400 text-[#2B1B10]">
+                <button type="button" onclick="toggleFanReportMenu(false); openCameraReportModal('colony')" class="neko-btn fan-item fan-toe-3 bg-amber-400 text-[#2B1B10]">
                   <span id="ico-fan-col"></span>
-                  <span class="text-[9px] font-bold leading-none">Colonia</span>
+                  <span class="text-[8px] font-bold leading-none">Colonia</span>
+                </button>
+                <button type="button" onclick="toggleFanReportMenu(false); openAuthAndOnboardingModal('clinic')" class="neko-btn fan-item fan-toe-4 bg-emerald-400 text-[#2B1B10]">
+                  <span id="ico-fan-ent"></span>
+                  <span class="text-[8px] font-bold leading-none">Clínica</span>
                 </button>
                 <button type="button" id="fan-report-trigger" onclick="toggleFanReportMenu()" class="neko-btn fan-main-orb bg-[#F97316] text-white flex-col gap-0.5">
                   <span id="ico-cam-orb"></span>
@@ -249,8 +256,7 @@
         </div>
       </section>
 
-      <!-- 3. SEZIONE CLINICHE -->
-      <section id="main-tab-clinics" class="hidden h-full flex flex-col p-2.5 gap-1.5 overflow-hidden relative">
+      <section id="main-tab-clinics" class="hidden h-full flex flex-col p-2.5 gap-1.5 overflow-hidden relative neko-view-anim">
         <div id="subtabs-bar-clinics" class="grid grid-cols-4 gap-1.5 bg-black/15 pt-2.5 pb-1.5 px-1.5 rounded-xl border-2 border-[var(--outline)] shrink-0">
           <button type="button" onclick="setSubTab('clinics','triage')" id="subbtn-clinics-triage" class="neko-btn py-1.5 text-[10px] font-bold bg-[#F97316] text-white gap-1 relative"><span id="ico-cl-1"></span><span>Clínicas</span><span id="badge-cl-triage" class="badge-num">1</span></button>
           <button type="button" onclick="setSubTab('clinics','adopt')" id="subbtn-clinics-adopt" class="neko-btn py-1.5 text-[10px] font-bold bg-[var(--pill-idle)] text-[var(--text-main)] gap-1 relative"><span id="ico-cl-2"></span><span>Adopción</span><span id="badge-cl-adopt" class="badge-num">1</span></button>
@@ -261,10 +267,10 @@
         <div class="flex-1 relative overflow-hidden flex flex-col">
           <button type="button" id="y-arrow-up-clinics" onclick="nudgeVerticalScroll('swipe-area-clinics', -200)" class="hidden absolute top-1.5 left-1/2 z-[410] w-7 h-7 rounded-full bg-[#2B1B10] text-amber-300 border-2 border-amber-300 flex items-center justify-center font-neko font-bold text-xs shadow-md scroll-arrow-up">⌃</button>
           <div id="swipe-area-clinics" onscroll="updateVerticalArrows(this,'y-arrow-up-clinics','y-arrow-down-clinics')" class="cards-scroll-window space-y-2.5">
-            <div id="subview-clinics-triage" class="space-y-2.5"></div>
-            <div id="subview-clinics-adopt" class="hidden space-y-2.5"></div>
-            <div id="subview-clinics-campaigns" class="hidden space-y-2.5"></div>
-            <div id="subview-clinics-supplies" class="hidden space-y-2.5"></div>
+            <div id="subview-clinics-triage" class="space-y-2.5 neko-view-anim"></div>
+            <div id="subview-clinics-adopt" class="hidden space-y-2.5 neko-view-anim"></div>
+            <div id="subview-clinics-campaigns" class="hidden space-y-2.5 neko-view-anim"></div>
+            <div id="subview-clinics-supplies" class="hidden space-y-2.5 neko-view-anim"></div>
           </div>
           <button type="button" id="y-arrow-down-clinics" onclick="nudgeVerticalScroll('swipe-area-clinics', 200)" class="absolute bottom-1.5 left-1/2 z-[410] w-7 h-7 rounded-full bg-[#2B1B10] text-amber-300 border-2 border-amber-300 flex items-center justify-center font-neko font-bold text-xs shadow-md scroll-arrow-down">⌄</button>
         </div>
@@ -272,7 +278,6 @@
       </section>
     </main>
 
-    <!-- NAV-BAR INFERIORE INCASTONATA -->
     <nav id="bottom-nav-bar" class="neko-wood-bottom px-4 z-30 shrink-0">
       <div class="interlocked-dock max-w-[390px] w-full">
         <button type="button" onclick="switchMainTab('shelters')" id="nav-btn-shelters" class="neko-btn nav-wing-left flex-1 bg-[var(--bg-subcard)] text-[var(--text-main)] gap-2 relative">
@@ -290,18 +295,21 @@
       </div>
     </nav>
 
-    <!-- DRAWER LATERALE DESTRO -->
     <div id="right-drawer-backdrop" onclick="if(event.target===this) toggleRightDrawer(false)" class="hidden fixed inset-0 bg-black/70 z-[650] flex justify-end">
-      <div id="right-drawer-panel" class="w-[84%] max-w-[340px] h-full neko-card rounded-none rounded-l-2xl p-3.5 overflow-y-auto space-y-2.5 shadow-2xl border-r-0">
+      <div id="right-drawer-panel" class="w-[84%] max-w-[340px] h-full neko-card rounded-none rounded-l-2xl p-3.5 overflow-y-auto space-y-2.5 shadow-2xl border-r-0 neko-pop-anim">
         <div class="flex items-center justify-between border-b-2 border-[var(--outline)]/20 pb-2">
           <h3 class="font-neko font-bold text-sm flex items-center gap-1.5"><span id="ico-drw-gear"></span><span>Menú, Cuenta y Tour Guiado</span></h3>
           <button type="button" onclick="toggleRightDrawer(false)" class="neko-btn px-2.5 py-0.5 bg-stone-200 text-[#2B1B10] font-bold text-xs">✕</button>
         </div>
         <div id="firebase-status-pill" class="p-2 rounded-xl bg-amber-100 border border-[#2B1B10] text-[#2B1B10] text-[9.5px] font-bold">
-          Modo Local Activo (Pega tu firebaseConfig para sincronizar con Google Cloud)
+          Modo Local Activo (Al pegar FIREBASE_CONFIG se oculta el simulador demo y se activa producción real)
         </div>
         <button type="button" onclick="toggleRightDrawer(false); startSpotlightTour(0)" class="w-full neko-btn py-2 bg-amber-300 text-[#2B1B10] font-bold text-xs gap-1.5"><span id="ico-drw-tour"></span><span>Iniciar Tour Guiado Completo (10 Etapas)</span></button>
         <button type="button" onclick="toggleRightDrawer(false); openAuthAndOnboardingModal('volunteer')" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs gap-1.5"><span id="ico-drw-key"></span><span>Registro / Iniciar Sesión y Perfil</span></button>
+        <div class="p-2.5 neko-subcard flex items-center justify-between">
+          <span class="font-neko font-bold text-[10.5px]">Efectos de Sonido (SFX Neko):</span>
+          <button type="button" id="sfx-toggle-btn" onclick="toggleSfxSetting()" class="neko-btn px-3 py-1 bg-emerald-300 text-[#2B1B10] font-bold text-[10px]">Activos</button>
+        </div>
         <div class="p-2.5 neko-subcard space-y-1.5">
           <p class="font-neko font-bold text-[10.5px]">Tema de Pelaje (Neko Atsume):</p>
           <div class="grid grid-cols-2 gap-1.5 text-[10px]">
@@ -311,9 +319,8 @@
             <button type="button" onclick="applyTheme('void')" class="neko-btn py-1.5 bg-[#242636] text-[#FDE68A] font-bold">Void (Noche Estelar)</button>
           </div>
         </div>
-        <div class="p-2.5 neko-subcard space-y-1.5">
-          <p class="font-neko font-bold text-[10.5px]">Simulador de Vista por Tipo de Cuenta:</p>
-          <p class="text-[9px] opacity-80">La interfaz muestra únicamente las funciones de tu rol activo:</p>
+        <div id="demo-role-switcher-box" class="p-2.5 neko-subcard space-y-1.5">
+          <p class="font-neko font-bold text-[10.5px]">Simulador de Vista (Solo en Modo Demo):</p>
           <div class="grid grid-cols-2 gap-1.5 text-[10px]">
             <button type="button" onclick="setRolePin('volunteer')" class="neko-btn py-1.5 bg-[var(--bg-card)] text-[var(--text-main)] font-bold">Voluntario</button>
             <button type="button" onclick="setRolePin('1111')" class="neko-btn py-1.5 bg-emerald-300 text-[#2B1B10] font-bold">Clínica</button>
@@ -325,17 +332,19 @@
       </div>
     </div>
 
-    <!-- LENTE SPOTLIGHT CUTOUT (ZERO BUG D'OSCURAMENTO E ZERO SPOSTAMENTI!) -->
+    <!-- SISTEMA TOUR BLINDATO: 4 SCUDI DI BLOCCO INTERFACCIA + LENTE ADATTIVA (RETTANGOLARE O CIRCOLARE) -->
+    <div id="tour-lock-top" class="hidden tour-lock-shield"></div>
+    <div id="tour-lock-bottom" class="hidden tour-lock-shield"></div>
+    <div id="tour-lock-left" class="hidden tour-lock-shield"></div>
+    <div id="tour-lock-right" class="hidden tour-lock-shield"></div>
     <div id="tour-cutout-lens" class="hidden"></div>
-    <div id="tour-spotlight-card" class="hidden fixed left-3 right-3 max-w-[420px] mx-auto z-[930] neko-card p-3.5 space-y-2 shadow-2xl border-2 border-amber-400"></div>
+    <div id="tour-spotlight-card" class="hidden fixed left-3 right-3 max-w-[420px] mx-auto z-[930] neko-card p-3.5 space-y-2 shadow-2xl border-2 border-amber-400 neko-pop-anim"></div>
 
-    <!-- MODALE CENTRATO -->
     <div id="center-modal-backdrop" onclick="if(event.target===this) closeCenterModal()" class="hidden fixed inset-0 bg-black/75 z-[700] flex items-center justify-center p-3">
-      <div id="center-modal-content" class="w-full max-w-[425px] max-h-[86dvh] overflow-y-auto neko-card p-3.5 space-y-2.5 shadow-2xl"></div>
+      <div id="center-modal-content" class="w-full max-w-[425px] max-h-[86dvh] overflow-y-auto neko-card p-3.5 space-y-2.5 shadow-2xl neko-pop-anim"></div>
     </div>
 
-    <!-- TOAST -->
-    <div id="apk-toast" class="hidden fixed top-[142px] left-4 right-4 max-w-[390px] mx-auto p-2 rounded-xl bg-[var(--bg-card)] border-2 border-[#2B1B10] text-[var(--text-main)] shadow-2xl z-[960] flex items-center gap-2 pointer-events-none">
+    <div id="apk-toast" class="hidden fixed top-[142px] left-4 right-4 max-w-[390px] mx-auto p-2 rounded-xl bg-[var(--bg-card)] border-2 border-[#2B1B10] text-[var(--text-main)] shadow-2xl z-[960] flex items-center gap-2 pointer-events-none neko-pop-anim">
       <span id="toast-neko-ico"></span><span id="apk-toast-text" class="text-[11px] font-neko font-bold"></span>
     </div>
   </div>
@@ -350,7 +359,7 @@
       appId: ""
     };
 
-    const STORAGE_KEY = 'mishimaya_apk_v130_live';
+    const STORAGE_KEY = 'mishimaya_apk_v140_live';
     const ROLE_PINS = {
       'volunteer': { role: 'volunteer', entityId: '', entityName: 'Voluntario Mérida', paWeight: 3, label: 'Voluntario Veterano TNR' },
       '1111': { role: 'clinic', entityId: 'amicagatos', entityName: 'Amica Gatos', paWeight: 6, label: 'Clínica Amica Gatos' },
@@ -359,8 +368,47 @@
     };
 
     /* =========================================================================
-       LIBRERIA UNIFICATA 100% ICONE VETTORIALI SVG NEKO ATSUME (ZERO EMOJI ANDROID)
+       MOTORE AUDIO PROCEDURALE WEB AUDIO API (SFX STILE NEKO ATSUME)
        ========================================================================= */
+    const NekoSFX = {
+      ctx: null,
+      enabled: true,
+      init() {
+        if (!this.ctx && (window.AudioContext || window.webkitAudioContext)) {
+          this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+      },
+      tone(freq, endFreq, dur, type = 'sine', vol = 0.09, delay = 0) {
+        if (!this.enabled) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const t0 = this.ctx.currentTime + delay;
+          const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, t0);
+          if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, t0 + dur);
+          gain.gain.setValueAtTime(vol, t0);
+          gain.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+          osc.connect(gain); gain.connect(this.ctx.destination);
+          osc.start(t0); osc.stop(t0 + dur);
+        } catch (e) {}
+      },
+      tap() { this.tone(440, 680, 0.065, 'triangle', 0.08, 0); },
+      pawFan(opening = true) {
+        const notes = opening ? [440, 554, 659, 880] : [880, 659, 554, 440];
+        notes.forEach((n, i) => this.tone(n, n * 1.05, 0.07, 'sine', 0.07, i * 0.04));
+      },
+      modal() { this.tone(523, 784, 0.11, 'sine', 0.08, 0); },
+      sos() { this.tone(740, 520, 0.14, 'triangle', 0.11, 0); this.tone(740, 520, 0.16, 'triangle', 0.11, 0.16); },
+      celebrate() {
+        [523.25, 659.25, 783.99, 1046.5].forEach((n, i) => this.tone(n, n * 1.02, 0.16, 'triangle', 0.10, i * 0.07));
+        this.tone(720, 1180, 0.18, 'sine', 0.09, 0.34);
+        this.tone(1180, 640, 0.22, 'sine', 0.09, 0.50);
+      }
+    };
+
     function nekoSvg(name, cls = 'w-4 h-4') {
       const icons = {
         paw: `<svg class="${cls} inline-block shrink-0" viewBox="0 0 32 32"><circle cx="16" cy="20" r="6" fill="#F97316" stroke="#2B1B10" stroke-width="2.2"/><circle cx="9" cy="12" r="3" fill="#FFFDF7" stroke="#2B1B10" stroke-width="2"/><circle cx="16" cy="9" r="3" fill="#FFFDF7" stroke="#2B1B10" stroke-width="2"/><circle cx="23" cy="12" r="3" fill="#FFFDF7" stroke="#2B1B10" stroke-width="2"/></svg>`,
@@ -395,7 +443,7 @@
         'ico-cl-1':'clinic','ico-cl-2':'cat','ico-cl-3':'heart','ico-cl-4':'box',
         'ico-mf-all':'paw','ico-mf-sos':'sos','ico-mf-sig':'cat','ico-mf-col':'colonyCats','ico-mf-sh':'house','ico-mf-cl':'clinic',
         'ico-ctrl-bell':'bell','ico-ctrl-gps':'gps','ico-ctrl-zones':'paw',
-        'ico-cam-orb':'camOrb','ico-fan-sos':'sos','ico-fan-sig':'cat','ico-fan-col':'colonyCats','ico-fan-ent':'clinic',
+        'ico-cam-orb':'paw','ico-fan-sos':'sos','ico-fan-sig':'cat','ico-fan-col':'colonyCats','ico-fan-ent':'clinic',
         'ico-nav-shelters':'house','ico-nav-map':'compass','ico-nav-clinics':'clinic',
         'ico-drw-gear':'paw','ico-drw-tour':'medal','ico-drw-key':'key','ico-drw-heart':'heart',
         'toast-neko-ico':'paw'
@@ -442,7 +490,7 @@
     function getDefaultState() {
       const now = Date.now();
       return {
-        theme: 'calico', karma: 1450, mainTab: 'map', mapPinFilter: 'all', registered: false, tutorialSeen: false,
+        theme: 'calico', sfxEnabled: true, karma: 1450, mainTab: 'map', mapPinFilter: 'all', registered: false, tutorialSeen: false,
         subTabs: { shelters: 'list', clinics: 'triage' },
         session: { role: 'volunteer', entityId: '', entityName: 'Voluntario Mérida', paWeight: 3, label: 'Voluntario Veterano TNR', email: '' },
         userCoords: { lat: 20.9865, lng: -89.6165, accuracy: 8 },
@@ -501,7 +549,12 @@
     }
 
     function initFirebaseCloud() {
-      if (!FIREBASE_CONFIG.apiKey || typeof firebase === 'undefined') return;
+      const demoBox = document.getElementById('demo-role-switcher-box');
+      if (!FIREBASE_CONFIG.apiKey || typeof firebase === 'undefined') {
+        if (demoBox) demoBox.classList.remove('hidden');
+        return;
+      }
+      if (demoBox) demoBox.classList.add('hidden');
       try {
         if (!firebase.apps.length) fbApp = firebase.initializeApp(FIREBASE_CONFIG);
         fbAuth = firebase.auth();
@@ -509,9 +562,13 @@
         const pill = document.getElementById('firebase-status-pill');
         if (pill) {
           pill.className = 'p-2 rounded-xl bg-emerald-200 border border-[#2B1B10] text-[#2B1B10] text-[9.5px] font-bold flex items-center gap-1.5';
-          pill.innerHTML = `${nekoSvg('check','w-4 h-4')}<span>Conectado en tiempo real a Google Firebase y Firestore</span>`;
+          pill.innerHTML = `${nekoSvg('check','w-4 h-4')}<span>Producción Activa: Conectado a Google Firebase y Firestore</span>`;
         }
-        fbDb.collection('mishimaya_state').doc('merida_live').onSnapshot(doc => {
+        const docRef = fbDb.collection('mishimaya_state').doc('merida_live');
+        docRef.get().then(doc => {
+          if (!doc.exists) syncStateToCloudFirestore();
+        }).catch(() => {});
+        docRef.onSnapshot(doc => {
           if (doc && doc.exists) {
             const cloudData = doc.data();
             if (cloudData && cloudData.updatedAt > (window.lastLocalSave || 0)) {
@@ -540,6 +597,18 @@
       }, { merge: true }).catch(() => {});
     }
 
+    function toggleSfxSetting() {
+      state.sfxEnabled = !state.sfxEnabled;
+      NekoSFX.enabled = state.sfxEnabled;
+      const btn = document.getElementById('sfx-toggle-btn');
+      if (btn) {
+        btn.textContent = state.sfxEnabled ? 'Activos' : 'Silencio';
+        btn.className = `neko-btn px-3 py-1 ${state.sfxEnabled ? 'bg-emerald-300' : 'bg-stone-300'} text-[#2B1B10] font-bold text-[10px]`;
+      }
+      if (state.sfxEnabled) NekoSFX.celebrate();
+      saveState();
+    }
+
     function notify(msg) {
       const box = document.getElementById('apk-toast');
       document.getElementById('apk-toast-text').textContent = msg;
@@ -549,6 +618,7 @@
     }
 
     function launchNekoCelebration() {
+      NekoSFX.celebrate();
       const svgs = [nekoSvg('fishGold', 'w-8 h-8'), nekoSvg('paw', 'w-8 h-8'), nekoSvg('cat', 'w-8 h-8'), nekoSvg('heart', 'w-7 h-7'), nekoSvg('medal', 'w-7 h-7')];
       for (let i = 0; i < 18; i++) {
         const el = document.createElement('div');
@@ -581,6 +651,7 @@
       const lbl = document.getElementById('fan-trigger-label');
       if (!wrap) return;
       const next = forceState !== undefined ? forceState : !wrap.classList.contains('open');
+      if (next !== wrap.classList.contains('open')) NekoSFX.pawFan(next);
       wrap.classList.toggle('open', next);
       if (lbl) lbl.textContent = next ? 'Cerrar' : 'Reportar';
     }
@@ -607,6 +678,7 @@
     function openSosTransitFollowUpModal(pinId) {
       const item = state.streetItems.find(x => x.id === pinId);
       if (!item) return;
+      NekoSFX.sos();
       openCenterModal(`
         <div class="flex justify-between items-center border-b pb-1.5">
           <span class="px-2 py-0.5 rounded-full bg-amber-300 text-[#2B1B10] font-neko font-bold text-[8.5px] flex items-center gap-1">${nekoSvg('bell','w-3.5 h-3.5')}<span>RECORDATORIO CADA 30 MINUTOS</span></span>
@@ -625,6 +697,7 @@
 
     function takeChargeOfSosPin(pinId) {
       const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      NekoSFX.sos();
       item.status = 'in_transit';
       item.responderName = state.session.entityName || state.session.label;
       item.responderSince = Date.now();
@@ -653,6 +726,7 @@
 
     function releaseSosBackToRed(pinId) {
       const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      NekoSFX.sos();
       item.status = 'active'; item.responderName = '';
       item.inAppMessages.unshift('El voluntario no logró capturarlo: el SOS vuelve a estar activo para otros rescatistas.');
       closeCenterModal(); showPinCardOverlay('street', pinId); renderAll();
@@ -805,7 +879,7 @@
     function downloadCanvasPosterPng(name) {
       const cv = document.getElementById('social-poster-canvas'); if (!cv) return;
       const a = document.createElement('a'); a.download = `MishiMaya_${(name || 'Cartel').replace(/\s+/g, '_')}.png`; a.href = cv.toDataURL('image/png'); a.click();
-      state.karma += 20; renderAll(); notify('Cartel PNG de alta calidad guardado (+20 EXP).');
+      state.karma += 20; renderAll(); launchNekoCelebration(); notify('Cartel PNG de alta calidad guardado (+20 EXP).');
     }
 
     function shareCanvasPosterNative(title, shareTxt) {
@@ -863,7 +937,7 @@
         </div>
         <div class="space-y-2 text-[11px]">
           <button type="button" onclick="triggerGoogleFirebaseLogin()" class="w-full neko-btn py-2 bg-[#FFFDF7] text-[#2B1B10] font-bold text-xs gap-1.5">${nekoSvg('shield','w-4 h-4')}<span>Continuar con Google</span></button>
-          <input id="auth-email-inp" type="email" value="${state.session.email || 'voluntario@mishimaya.mx'}" placeholder="Tu correo electrónico *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+          <input id="auth-email-inp" type="email" value="${state.session.email || (FIREBASE_CONFIG.apiKey ? '' : 'voluntario@mishimaya.mx')}" placeholder="Tu correo electrónico *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
           <div class="grid grid-cols-4 gap-1 text-[9.5px]">
             <button type="button" onclick="openAuthAndOnboardingModal('volunteer')" class="neko-btn py-1.5 font-bold ${selectedRole === 'volunteer' ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}">Voluntario</button>
             <button type="button" onclick="openAuthAndOnboardingModal('clinic')" class="neko-btn py-1.5 font-bold ${selectedRole === 'clinic' ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}">Clínica</button>
@@ -923,31 +997,69 @@
     }
 
     /* =========================================================================
-       MOTORE TOUR GUIDATO "SPOTLIGHT CUTOUT" IN 10 TAPPE (ZERO GLITCH CSS)
+       MOTORE TOUR GUIDATO BLINDATO (4 SCUDI FISICI DI BLOCCO + LENTE CIRCOLARE
+       PER BOTTONI ROTONDI + NAV-BAR PRIMA DELLE SEZIONI INTERNE)
        ========================================================================= */
     const SPOTLIGHT_STAGES = [
-      { tab: 'map', targetId: 'top-exp-box', pos: 'bottom', badge: 'ETAPA 1 DE 10 • BARRA KARMA Y NIVEL', title: 'Barra de Experiencia y Autoridad', desc: 'Aquí ves tu rango activo y tus Peces de Oro (EXP). La barra se llena y pulsa al subir de nivel. Toca la barra iluminada o pulsa Siguiente.' },
-      { tab: 'map', targetId: 'btn-top-account', pos: 'bottom', badge: 'ETAPA 2 DE 10 • CUENTA Y ROLES', title: 'Acceso, Roles y Cuestionario', desc: 'Desde el botón Cuenta puedes iniciar sesión con Google o correo y configurar tu perfil como Voluntario, Clínica, Refugio o Administrador.' },
-      { tab: 'map', targetId: 'btn-top-drawer', pos: 'bottom', badge: 'ETAPA 3 DE 10 • MENÚ LATERAL', title: 'Menú de Temas, Tutorial y Donación Libre', desc: 'En este menú cambias entre los 4 temas de pelaje (Calico, Tabby, Carey y Void), reinicias este tour cuando quieras o apoyas a la aplicación.' },
-      { tab: 'map', targetId: 'map-filters-bar', pos: 'bottom', badge: 'ETAPA 4 DE 10 • FILTROS DEL MAPA', title: 'Filtros Deslizables (❮ y ❯)', desc: 'Aísla en el mapa los casos SOS, Avistados, Colonias, Refugios o Clínicas. Las flechas ❮ y ❯ te indican cuándo hay más filtros fuera de pantalla.' },
-      { tab: 'map', targetId: 'map-pin-card', pos: 'top', action: 'showSamplePin', badge: 'ETAPA 5 DE 10 • PINES Y ÁLBUM POR CUADRA', title: 'Pines Interactivos, SOS Naranja y Fotos', desc: 'Al tocar un pin ves su ficha rápida: los SOS pasan a color naranja cuando alguien va en camino (con recordatorio cada 30 min) y puedes añadir fotos al mismo pin de la cuadra.' },
-      { tab: 'map', targetId: 'map-side-controls', pos: 'bottom', badge: 'ETAPA 6 DE 10 • NOVEDADES Y GPS REAL', title: 'Controles Laterales: Novedades y GPS', desc: 'Toca repetidamente el botón de campana para centrar el mapa en cada novedad una por una hasta llegar a 0 (gris). El botón GPS centra tu ubicación real.' },
-      { tab: 'map', targetId: 'fan-report-menu', pos: 'top', action: 'openFan', badge: 'ETAPA 7 DE 10 • BOTÓN ÚNICO EN ABANICO', title: 'Botón de Reporte con Apertura en Abanico', desc: 'Al tocar Reportar se despliegan en abanico las opciones SOS, Michi en Calle (con protocolo Casa Segura), Colonia y sugerencia de Clínica/Refugio.' },
-      { tab: 'shelters', targetId: 'subtabs-bar-shelters', pos: 'bottom', badge: 'ETAPA 8 DE 10 • SECCIÓN REFUGIOS', title: 'Refugios, Insignia Oficial y Carruseles', desc: 'Los refugios que participan en la app muestran la insignia dorada "App Oficial". Desliza los carruseles con el dedo y usa las flechas ⌃ y ⌄ para recorrer las fichas.' },
-      { tab: 'clinics', targetId: 'subtabs-bar-clinics', pos: 'bottom', badge: 'ETAPA 9 DE 10 • CLÍNICAS Y CONFIRMACIÓN', title: 'Clínicas y Confirmación de Donaciones', desc: 'Las donaciones SPEI y compras de insumos quedan pendientes hasta que la Clínica o Refugio confirma su recepción real, evitando cierres por error.' },
-      { tab: 'map', targetId: 'bottom-nav-bar', pos: 'top', badge: 'ETAPA 10 DE 10 • NAVEGACIÓN Y CARTELES', title: 'Navegación Simétrica y Carteles Sociales', desc: 'Cambia entre Refugios, Mapa y Clínicas. En cualquier ficha o pin puedes tocar "Compartir Imagen" para crear un cartel ilustrado Neko Atsume de alta calidad.' }
+      { tab: 'map', targetId: 'top-exp-box', shape: 'rect', pos: 'bottom', badge: 'ETAPA 1 DE 10 • BARRA KARMA Y NIVEL', title: 'Barra de Experiencia y Autoridad', desc: 'Aquí ves tu rango activo y tus Peces de Oro (EXP). La barra se llena y pulsa al subir de nivel. Toca el área iluminada o pulsa Siguiente.' },
+      { tab: 'map', targetId: 'btn-top-account', shape: 'rect', pos: 'bottom', badge: 'ETAPA 2 DE 10 • CUENTA Y ROLES', title: 'Acceso, Roles y Cuestionario', desc: 'Desde el botón Cuenta puedes iniciar sesión con Google o correo y configurar tu perfil como Voluntario, Clínica, Refugio o Administrador.' },
+      { tab: 'map', targetId: 'btn-top-drawer', shape: 'rect', pos: 'bottom', badge: 'ETAPA 3 DE 10 • MENÚ LATERAL', title: 'Menú de Temas, Sonidos SFX y Tour', desc: 'En este menú activas o silencias los efectos de sonido Neko, cambias entre los 4 temas de pelaje o reinicias este tour cuando quieras.' },
+      { tab: 'map', targetId: 'map-filters-bar', shape: 'rect', pos: 'bottom', badge: 'ETAPA 4 DE 10 • FILTROS DEL MAPA', title: 'Filtros Deslizables (❮ y ❯)', desc: 'Aísla en el mapa los casos SOS, Avistados, Colonias, Refugios o Clínicas. Cada pin muestra su etiqueta descriptiva arriba para identificarlo sin abrirlo.' },
+      { tab: 'map', targetId: 'map-pin-card', shape: 'rect', pos: 'top', action: 'showSamplePin', badge: 'ETAPA 5 DE 10 • PINES Y ÁLBUM POR CUADRA', title: 'Pines con Etiqueta, SOS Naranja y Fotos', desc: 'Al tocar un pin ves su ficha rápida: los SOS pasan a color naranja cuando alguien va en camino (con recordatorio cada 30 min) y puedes añadir fotos a la misma cuadra.' },
+      { tab: 'map', targetId: 'btn-map-novelty', shape: 'circle', pos: 'bottom', badge: 'ETAPA 6 DE 10 • BOTÓN NOVEDADES REDONDO', title: 'Centrado Secuencial de Novedades', desc: 'Observa el enfoque circular: toca repetidamente este botón redondo para saltar una por una a cada novedad del mapa hasta que el contador llegue a 0 (gris).' },
+      { tab: 'map', targetId: 'fan-report-trigger', shape: 'circle', pos: 'top', action: 'openFan', badge: 'ETAPA 7 DE 10 • PATITA DE REPORTE', title: 'Botón Único en Forma de Patita de Gato', desc: 'Al tocar Reportar se abren los 4 deditos de la patita: SOS, Michi en Calle (Casa Segura), Colonia y sugerencia de Nueva Clínica/Refugio.' },
+      { tab: 'map', targetId: 'bottom-nav-bar', shape: 'rect', pos: 'top', badge: 'ETAPA 8 DE 10 • BARRA DE NAVEGACIÓN', title: 'Navegación Principal Simétrica', desc: 'Antes de entrar a las secciones, conoce la barra inferior: desde aquí cambias entre la sección de Refugios, el Mapa central y la sección de Clínicas.' },
+      { tab: 'shelters', targetId: 'subtabs-bar-shelters', shape: 'rect', pos: 'bottom', badge: 'ETAPA 9 DE 10 • DENTRO DE REFUGIOS', title: 'Sección Refugios, Carruseles e Insumos', desc: 'Dentro de Refugios ves su ocupación, gatos en adopción, campañas y listas de insumos agrupadas por entidad. Las flechas ⌃ y ⌄ indican contenido arriba o abajo.' },
+      { tab: 'clinics', targetId: 'subtabs-bar-clinics', shape: 'rect', pos: 'bottom', badge: 'ETAPA 10 DE 10 • DENTRO DE CLÍNICAS', title: 'Sección Clínicas e Insignia Oficial', desc: 'En Clínicas ves las veterinarias verificadas con la insignia dorada "App Oficial" y confirmas donaciones o insumos recibidos.' }
     ];
 
-    function positionCutoutLensOnElement(el) {
+    function positionCutoutLensAndShields(el, shape = 'rect') {
       const lens = document.getElementById('tour-cutout-lens');
+      const sTop = document.getElementById('tour-lock-top'), sBot = document.getElementById('tour-lock-bottom');
+      const sLeft = document.getElementById('tour-lock-left'), sRight = document.getElementById('tour-lock-right');
       if (!lens || !el) return;
       const r = el.getBoundingClientRect();
-      const pad = 6;
-      lens.style.top = Math.max(4, r.top - pad) + 'px';
-      lens.style.left = Math.max(4, r.left - pad) + 'px';
-      lens.style.width = Math.min(window.innerWidth - 8, r.width + pad * 2) + 'px';
-      lens.style.height = (r.height + pad * 2) + 'px';
+      const pad = shape === 'circle' ? 8 : 6;
+      let top, left, width, height;
+
+      if (shape === 'circle') {
+        const side = Math.max(r.width, r.height) + pad * 2;
+        const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+        width = side; height = side;
+        left = Math.max(2, cx - side / 2);
+        top = Math.max(2, cy - side / 2);
+        lens.style.borderRadius = '9999px';
+      } else {
+        top = Math.max(4, r.top - pad);
+        left = Math.max(4, r.left - pad);
+        width = Math.min(window.innerWidth - 8, r.width + pad * 2);
+        height = r.height + pad * 2;
+        lens.style.borderRadius = '16px';
+      }
+
+      lens.style.top = top + 'px';
+      lens.style.left = left + 'px';
+      lens.style.width = width + 'px';
+      lens.style.height = height + 'px';
       lens.classList.remove('hidden');
+
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const rightEdge = Math.min(vw, left + width), bottomEdge = Math.min(vh, top + height);
+
+      sTop.style.cssText = `top:0;left:0;width:${vw}px;height:${top}px;`;
+      sBot.style.cssText = `top:${bottomEdge}px;left:0;width:${vw}px;height:${Math.max(0, vh - bottomEdge)}px;`;
+      sLeft.style.cssText = `top:${top}px;left:0;width:${left}px;height:${height}px;`;
+      sRight.style.cssText = `top:${top}px;left:${rightEdge}px;width:${Math.max(0, vw - rightEdge)}px;height:${height}px;`;
+
+      [sTop, sBot, sLeft, sRight].forEach(sh => {
+        sh.classList.remove('hidden');
+        sh.onclick = e => {
+          e.stopPropagation();
+          e.preventDefault();
+          NekoSFX.tap();
+          notify('Toca únicamente el elemento iluminado o usa los botones del tour.');
+        };
+      });
     }
 
     function detachActiveTourTarget() {
@@ -966,6 +1078,7 @@
     }
 
     function startSpotlightTour(step = 0) {
+      NekoSFX.modal();
       closeCenterModal();
       detachActiveTourTarget();
       currentSpotlightStep = step;
@@ -985,18 +1098,18 @@
 
       const card = document.getElementById('tour-spotlight-card');
       card.classList.remove('hidden');
-      card.style.top = st.pos === 'top' ? '78px' : 'auto';
-      card.style.bottom = st.pos === 'bottom' ? '122px' : 'auto';
+      card.style.top = st.pos === 'top' ? '76px' : 'auto';
+      card.style.bottom = st.pos === 'bottom' ? '120px' : 'auto';
 
       setTimeout(() => {
         const targetEl = document.getElementById(st.targetId);
         if (targetEl) {
-          positionCutoutLensOnElement(targetEl);
+          positionCutoutLensAndShields(targetEl, st.shape || 'rect');
           activeTourTarget = targetEl;
           targetEl.addEventListener('click', advanceSpotlightOnInteract, { once: true });
         }
         AdMobGuard.sync();
-      }, 140);
+      }, 150);
 
       card.innerHTML = `
         <div class="flex justify-between items-center border-b border-[var(--outline)]/20 pb-1">
@@ -1025,6 +1138,10 @@
       toggleFanReportMenu(false);
       document.getElementById('tour-cutout-lens').classList.add('hidden');
       document.getElementById('tour-spotlight-card').classList.add('hidden');
+      ['tour-lock-top', 'tour-lock-bottom', 'tour-lock-left', 'tour-lock-right'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
       state.tutorialSeen = true;
       saveState();
       AdMobGuard.sync();
@@ -1099,8 +1216,8 @@
       if (g) g.textContent = unseenCount > 0 ? unseenCount : '0';
       if (btnNov) {
         btnNov.className = unseenCount > 0
-          ? 'neko-btn w-9 h-9 bg-rose-500 text-white flex-col gap-0.5 relative'
-          : 'neko-btn w-9 h-9 bg-stone-300 text-stone-600 opacity-55 grayscale flex-col gap-0.5 relative';
+          ? 'neko-btn w-9 h-9 rounded-full bg-rose-500 text-white flex-col gap-0.5 relative'
+          : 'neko-btn w-9 h-9 rounded-full bg-stone-300 text-stone-600 opacity-55 grayscale flex-col gap-0.5 relative';
       }
     }
 
@@ -1135,6 +1252,7 @@
           const dx = e.changedTouches[0].screenX - sx;
           const tr = document.getElementById(trackId);
           if (!tr || tr.children.length <= 1 || Math.abs(dx) < 30) return;
+          NekoSFX.tap();
           carouselIdx[key] = dx < 0 ? (carouselIdx[key] + 1) % tr.children.length : (carouselIdx[key] - 1 + tr.children.length) % tr.children.length;
           tr.style.transform = `translateX(-${carouselIdx[key] * 100}%)`;
         }, { passive: true });
@@ -1153,21 +1271,29 @@
       }, 4200);
     }
 
+    /* =========================================================================
+       CLUSTER ENGINE & PIN CON TAG TESTUALE DESCRITTIVO SEMPRE VISIBILE
+       ========================================================================= */
     const ClusterEngine = {
       getRadiusForZoom(z) { return z <= 11.5 ? 0.042 : (z <= 13 ? 0.020 : 0); },
       collectVisiblePins() {
         const flt = state.mapPinFilter, pins = [];
         state.streetItems.forEach(item => {
           if (flt !== 'all' && flt !== item.type) return;
-          const photosLen = (item.folderPhotos || []).length;
-          let badge = photosLen > 1 ? `Fotos:${photosLen}` : '';
-          if (item.ownerClaimed) badge = 'Casa';
-          else if (item.quarantineNotice) badge = 'Retiro';
-          else if (item.type === 'emergency') badge = item.status === 'in_transit' ? 'Traslado' : 'SOS';
-          pins.push({ lat: item.lat, lng: item.lng, kind: item.type, subStatus: item.status, overlayKind: 'street', id: item.id, badge, isGrey: false, appMember: false });
+          let badge = 'En Calle';
+          if (item.type === 'emergency') badge = item.status === 'in_transit' ? 'En Traslado' : 'SOS Urgente';
+          else if (item.type === 'colony') badge = 'Colonia';
+          else if (item.ownerClaimed || item.catSafetyType === 'owned_collar') badge = 'Casa Segura';
+          else if (item.catSafetyType === 'tnr_ear') badge = 'Michi TNR';
+          else if (item.quarantineNotice) badge = 'En Retiro';
+          pins.push({ lat: item.lat, lng: item.lng, kind: item.type, subStatus: item.status, overlayKind: 'street', id: item.id, badge, isGrey: false });
         });
-        if (flt === 'all' || flt === 'shelters') state.shelters.forEach(s => pins.push({ lat: s.lat, lng: s.lng, kind: 'shelter', subStatus: 'open', overlayKind: 'shelter', id: s.id, badge: s.appMember ? 'App' : '', isGrey: false, appMember: !!s.appMember }));
-        if (flt === 'all' || flt === 'clinics') state.clinics.forEach(c => pins.push({ lat: c.lat, lng: c.lng, kind: 'clinic', subStatus: c.status, overlayKind: 'clinic', id: c.id, badge: !c.confirmed ? 'Por confirmar' : (c.appMember ? 'App' : ''), isGrey: !c.confirmed, appMember: !!c.appMember }));
+        if (flt === 'all' || flt === 'shelters') {
+          state.shelters.forEach(s => pins.push({ lat: s.lat, lng: s.lng, kind: 'shelter', subStatus: 'open', overlayKind: 'shelter', id: s.id, badge: 'Refugio', isGrey: false }));
+        }
+        if (flt === 'all' || flt === 'clinics') {
+          state.clinics.forEach(c => pins.push({ lat: c.lat, lng: c.lng, kind: 'clinic', subStatus: c.status, overlayKind: 'clinic', id: c.id, badge: !c.confirmed ? 'Por confirmar' : 'Clínica', isGrey: !c.confirmed }));
+        }
         return pins;
       },
       buildClusters(pins, radius) {
@@ -1182,6 +1308,7 @@
       },
       declusterGroup(group) {
         if (!mapInstance || !group || !group.items.length) return;
+        NekoSFX.tap();
         if (group.items.length === 1) { showPinCardOverlay(group.items[0].overlayKind, group.items[0].id); return; }
         mapInstance.flyToBounds(L.latLngBounds(group.items.map(i => [i.lat, i.lng])), { padding: [54, 54], maxZoom: 15, duration: 0.5 });
       },
@@ -1191,14 +1318,19 @@
     function createPointedPinIcon(kind, extraBadge, isGreyClinic, subStatus = 'active') {
       const isTransitSos = kind === 'emergency' && subStatus === 'in_transit';
       const cfg = {
-        emergency: { bg: isTransitSos ? '#F97316' : '#EF4444', ring: isTransitSos ? ' transit-ring' : ' sos-ring', anim: 'pin-anim-emergency', ico: nekoSvg('sos', 'w-5 h-5') },
-        sighting:  { bg: '#38BDF8', ring: '', anim: 'pin-anim-sighting', ico: nekoSvg('cat', 'w-5 h-5') },
-        colony:    { bg: '#FBBF24', ring: '', anim: 'pin-anim-colony', ico: nekoSvg('colonyCats', 'w-6 h-6') },
-        shelter:   { bg: '#C87D4B', ring: '', anim: 'pin-anim-shelter', ico: nekoSvg('house', 'w-5 h-5') },
-        clinic:    { bg: isGreyClinic ? '#9CA3AF' : '#10B981', ring: '', anim: 'pin-anim-clinic', ico: nekoSvg('clinic', 'w-5 h-5') }
-      }[kind] || { bg: '#F97316', ring: '', anim: '', ico: nekoSvg('paw', 'w-5 h-5') };
-      const tagHtml = extraBadge ? `<span class="absolute -top-2.5 -right-3 px-1.5 py-0.5 rounded-full bg-[#2B1B10] text-amber-300 font-neko font-bold text-[8px] border border-amber-300 shadow z-20 whitespace-nowrap">${extraBadge}</span>` : '';
-      return L.divIcon({ className: 'leaflet-div-icon-neko', html: `<div class="neko-pin-wrap ${cfg.anim}"><div class="neko-pin-head${cfg.ring}" style="background:${cfg.bg}">${tagHtml}${cfg.ico}</div><div class="neko-pin-tip"></div><div class="neko-pin-dot"></div></div>`, iconSize: [44, 52], iconAnchor: [22, 50] });
+        emergency: { bg: isTransitSos ? '#F97316' : '#EF4444', ring: isTransitSos ? ' transit-ring' : ' sos-ring', anim: 'pin-anim-emergency', ico: nekoSvg('sos', 'w-5 h-5'), defaultTag: isTransitSos ? 'En Traslado' : 'SOS Urgente' },
+        sighting:  { bg: '#38BDF8', ring: '', anim: 'pin-anim-sighting', ico: nekoSvg('cat', 'w-5 h-5'), defaultTag: 'En Calle' },
+        colony:    { bg: '#FBBF24', ring: '', anim: 'pin-anim-colony', ico: nekoSvg('colonyCats', 'w-6 h-6'), defaultTag: 'Colonia' },
+        shelter:   { bg: '#C87D4B', ring: ' shelter-ring', anim: 'pin-anim-shelter', ico: nekoSvg('house', 'w-5 h-5'), defaultTag: 'Refugio' },
+        clinic:    { bg: isGreyClinic ? '#9CA3AF' : '#10B981', ring: '', anim: 'pin-anim-clinic', ico: nekoSvg('clinic', 'w-5 h-5'), defaultTag: isGreyClinic ? 'Por confirmar' : 'Clínica' }
+      }[kind] || { bg: '#F97316', ring: '', anim: '', ico: nekoSvg('paw', 'w-5 h-5'), defaultTag: 'Pin' };
+      const label = extraBadge || cfg.defaultTag;
+      return L.divIcon({
+        className: 'leaflet-div-icon-neko',
+        html: `<div class="neko-pin-wrap ${cfg.anim}"><span class="neko-pin-tag">${label}</span><div class="neko-pin-head${cfg.ring}" style="background:${cfg.bg}">${cfg.ico}</div><div class="neko-pin-tip"></div><div class="neko-pin-dot"></div></div>`,
+        iconSize: [44, 58],
+        iconAnchor: [22, 56]
+      });
     }
 
     function initMap() {
@@ -1274,8 +1406,8 @@
           const hasSos = g.items.some(i => i.kind === 'emergency');
           const cIcon = L.divIcon({
             className: 'leaflet-div-icon-neko',
-            html: `<div class="neko-pin-wrap ${hasSos ? 'pin-anim-emergency' : 'pin-anim-colony'}"><div class="neko-pin-head ${hasSos ? 'sos-ring' : ''}" style="background:${hasSos ? '#EF4444' : '#F97316'};color:#FFF;font-family:Fredoka;font-weight:700;font-size:11px">${hasSos ? `<span class="absolute -top-2.5 -right-3 px-1.5 py-0.5 rounded-full bg-[#2B1B10] text-rose-400 text-[8px] border border-rose-400">SOS</span>` : ''}${g.items.length}</div><div class="neko-pin-tip"></div><div class="neko-pin-dot"></div></div>`,
-            iconSize: [44, 52], iconAnchor: [22, 50]
+            html: `<div class="neko-pin-wrap ${hasSos ? 'pin-anim-emergency' : 'pin-anim-colony'}"><span class="neko-pin-tag">${hasSos ? 'Zona SOS' : 'Grupo (' + g.items.length + ')'}</span><div class="neko-pin-head ${hasSos ? 'sos-ring' : ''}" style="background:${hasSos ? '#EF4444' : '#F97316'};color:#FFF;font-family:Fredoka;font-weight:700;font-size:11px">${g.items.length}</div><div class="neko-pin-tip"></div><div class="neko-pin-dot"></div></div>`,
+            iconSize: [44, 58], iconAnchor: [22, 56]
           });
           L.marker([g.lat, g.lng], { icon: cIcon }).on('click', () => ClusterEngine.declusterGroup(g)).addTo(markersLayer);
         } else {
@@ -1303,6 +1435,7 @@
 
     function showPinCardOverlay(kind, id) {
       const box = document.getElementById('map-pin-card'); if (!box) return;
+      NekoSFX.modal();
       toggleFanReportMenu(false);
       const role = state.session.role, isAdmin = role === 'admin';
       if (kind === 'street') {
@@ -1465,6 +1598,7 @@
           window.lastCapturedDataUrl = cv.toDataURL('image/jpeg', 0.84);
           const prev = document.getElementById('captured-photo-preview');
           if (prev) { prev.src = window.lastCapturedDataUrl; prev.classList.remove('hidden'); }
+          NekoSFX.celebrate();
           notify('Foto cargada en formato completo sin distorsión.');
         };
         im.src = e.target.result;
@@ -1486,7 +1620,7 @@
         folderPhotos: [{ kind: 'cat', label: 'Foto Principal del Michi', note: title, author: state.session.label, imgData: window.lastCapturedDataUrl || '' }, { kind: 'landmark', label: 'Punto de referencia', note: lm, author: state.session.label, imgData: '' }]
       });
       window.lastCapturedDataUrl = ''; state.karma += 50; closeCenterModal(); switchMainTab('map'); renderAll(); showPinCardOverlay('street', id);
-      animateKarmaExpBar(); notify('Pin publicado (+50 EXP).');
+      animateKarmaExpBar(); launchNekoCelebration(); notify('Pin publicado (+50 EXP).');
     }
 
     function openStreetFolderModal(pinId) {
@@ -1719,7 +1853,7 @@
               <span class="px-2 py-0.5 rounded-full ${isAvail ? 'bg-emerald-300' : 'bg-amber-300'} text-[#2B1B10] font-neko font-bold text-[8.5px]">${isAvail ? 'DISPONIBLE' : 'EN EVALUACIÓN'}</span>
               <span class="text-[9.5px] font-neko font-bold">${cat.entityName}</span>
             </div>
-            <div class="flip-card" onclick="this.classList.toggle('flipped')">
+            <div class="flip-card" onclick="NekoSFX.tap(); this.classList.toggle('flipped')">
               <div class="flip-inner">
                 <div class="flip-front neko-subcard">
                   <div class="flex items-center gap-2">
@@ -1838,7 +1972,7 @@
         if (ev.target.querySelector('input[name="cl_exp"]:checked')?.value === 'direct') w += 2;
         if (cl) { cl.paScore = (cl.paScore || 1) + w; cl.expCount = (cl.expCount || 1) + 1; if (cl.paScore >= 6) cl.confirmed = true; }
       } else { const st = state.streetItems.find(i => i.id === id); if (st) { st.paScore = (st.paScore || 1) + w; st.quarantineNotice = false; st.closeFlags = 0; } }
-      state.karma += 35; closeCenterModal(); closeMapPinCard(); renderAll(); animateKarmaExpBar(); notify('Confirmación registrada (+35 EXP).');
+      state.karma += 35; closeCenterModal(); closeMapPinCard(); renderAll(); animateKarmaExpBar(); launchNekoCelebration(); notify('Confirmación registrada (+35 EXP).');
     }
 
     function openInAppPinAlertModal(pinId) {
@@ -1959,11 +2093,12 @@
     function claimGreyClinicOfficial(id) { const cl = state.clinics.find(c => c.id === id); if (cl) { cl.confirmed = true; cl.appMember = true; cl.paScore = 6; renderAll(); launchNekoCelebration(); notify('¡Clínica verificada con Insignia App Oficial!'); } }
     function setRolePin(code) { if (ROLE_PINS[code]) state.session = { ...ROLE_PINS[code], email: state.session.email || '' }; toggleRightDrawer(false); closeMapPinCard(); renderAll(); notify(`Vista adaptada a: ${state.session.label}`); }
     function applyTheme(t) { state.theme = t; document.getElementById('apk-shell').setAttribute('data-theme', t); toggleRightDrawer(false); renderAll(); }
-    function toggleRightDrawer(open) { document.getElementById('right-drawer-backdrop').classList.toggle('hidden', !open); AdMobGuard.sync(); }
-    function openCenterModal(html) { document.getElementById('center-modal-content').innerHTML = html; document.getElementById('center-modal-backdrop').classList.remove('hidden'); AdMobGuard.sync(); }
+    function toggleRightDrawer(open) { if (open) NekoSFX.modal(); document.getElementById('right-drawer-backdrop').classList.toggle('hidden', !open); AdMobGuard.sync(); }
+    function openCenterModal(html) { NekoSFX.modal(); document.getElementById('center-modal-content').innerHTML = html; document.getElementById('center-modal-backdrop').classList.remove('hidden'); AdMobGuard.sync(); }
     function closeCenterModal() { document.getElementById('center-modal-backdrop').classList.add('hidden'); AdMobGuard.sync(); }
 
     function switchMainTab(tab) {
+      if (state.mainTab !== tab) NekoSFX.modal();
       state.mainTab = tab;
       toggleFanReportMenu(false);
       ['shelters', 'map', 'clinics'].forEach(t => document.getElementById(`main-tab-${t}`).classList.toggle('hidden', t !== tab));
@@ -1975,6 +2110,7 @@
     }
 
     function setSubTab(mainTab, sub) {
+      NekoSFX.tap();
       state.subTabs[mainTab] = sub;
       const list = mainTab === 'shelters' ? ['list', 'adopt', 'campaigns', 'supplies'] : ['triage', 'adopt', 'campaigns', 'supplies'];
       list.forEach(k => {
@@ -1999,6 +2135,12 @@
     }, 1000);
 
     function renderAll(skipCloudSync = false) {
+      NekoSFX.enabled = state.sfxEnabled !== false;
+      const sfxBtn = document.getElementById('sfx-toggle-btn');
+      if (sfxBtn) {
+        sfxBtn.textContent = NekoSFX.enabled ? 'Activos' : 'Silencio';
+        sfxBtn.className = `neko-btn px-3 py-1 ${NekoSFX.enabled ? 'bg-emerald-300' : 'bg-stone-300'} text-[#2B1B10] font-bold text-[10px]`;
+      }
       document.getElementById('apk-shell').setAttribute('data-theme', state.theme);
       document.getElementById('top-cat-icon').innerHTML = catAvatarSvg(state.theme);
       document.getElementById('top-karma-val').textContent = state.karma.toLocaleString('en-US');
@@ -2020,6 +2162,9 @@
       animateKarmaExpBar();
       startCarouselTimer();
       centerOnUserGPS(false);
+      document.addEventListener('click', e => {
+        if (e.target.closest('.neko-btn')) NekoSFX.tap();
+      }, { passive: true });
       if (!state.registered) setTimeout(() => openAuthAndOnboardingModal('volunteer'), 350);
     });
   </script>
