@@ -2449,6 +2449,89 @@
       }, 'image/png');
     }
 
+
+    function positionCutoutLensAndShields(el) {
+      const lens = document.getElementById('tour-cutout-lens');
+      const sTop = document.getElementById('tour-lock-top'), sBot = document.getElementById('tour-lock-bottom');
+      const sLeft = document.getElementById('tour-lock-left'), sRight = document.getElementById('tour-lock-right');
+      if (!lens || !el) return;
+      const r = el.getBoundingClientRect(), cs = window.getComputedStyle(el);
+      const pad = 4;
+      const top = Math.max(2, r.top - pad), left = Math.max(2, r.left - pad);
+      const width = Math.min(window.innerWidth - 4, r.width + pad * 2), height = r.height + pad * 2;
+
+      lens.style.top = top + 'px'; lens.style.left = left + 'px';
+      lens.style.width = width + 'px'; lens.style.height = height + 'px';
+      lens.style.borderRadius = el.id === 'fan-report-trigger' ? '26px' : (cs.borderRadius || '16px');
+      lens.classList.remove('hidden');
+
+      const vw = window.innerWidth, vh = window.innerHeight;
+      const rightEdge = Math.min(vw, left + width), bottomEdge = Math.min(vh, top + height);
+      sTop.style.cssText = `top:0;left:0;width:${vw}px;height:${top}px;`;
+      sBot.style.cssText = `top:${bottomEdge}px;left:0;width:${vw}px;height:${Math.max(0, vh - bottomEdge)}px;`;
+      sLeft.style.cssText = `top:${top}px;left:0;width:${left}px;height:${height}px;`;
+      sRight.style.cssText = `top:${top}px;left:${rightEdge}px;width:${Math.max(0, vw - rightEdge)}px;height:${height}px;`;
+
+      [sTop, sBot, sLeft, sRight].forEach(sh => {
+        sh.classList.remove('hidden');
+        sh.onclick = e => { e.stopPropagation(); e.preventDefault(); NekoSFX.alreadyActive(); notify('Toca el elemento iluminado o usa los botones del tour.'); };
+      });
+    }
+
+    function detachActiveTourTarget() {
+      if (activeTourTarget) { activeTourTarget.removeEventListener('click', advanceSpotlightOnInteract); activeTourTarget = null; }
+    }
+
+    function advanceSpotlightOnInteract() {
+      if (currentSpotlightStep >= 0 && currentSpotlightStep < SPOTLIGHT_STAGES.length - 1) setTimeout(() => startSpotlightTour(currentSpotlightStep + 1), 280);
+      else endSpotlightTour();
+    }
+
+    function startSpotlightTour(step = 0) {
+      NekoSFX.modal(); closeCenterModal(); detachActiveTourTarget();
+      currentSpotlightStep = step;
+      const st = SPOTLIGHT_STAGES[step] || SPOTLIGHT_STAGES[0];
+      switchMainTab(st.tab, true);
+
+      if (st.action === 'showSamplePin') { toggleFanReportMenu(false, true); if (state.clinics.length) showPinCardOverlay('clinic', state.clinics[0].id, true); }
+      else if (st.action === 'openFan') { closeMapPinCard(); toggleFanReportMenu(true, true); }
+      else { toggleFanReportMenu(false, true); if (st.tab !== 'map' || st.targetId !== 'map-pin-card') closeMapPinCard(); }
+
+      const card = document.getElementById('tour-spotlight-card');
+      card.classList.remove('hidden');
+      card.style.top = st.pos === 'top' ? '66px' : 'auto';
+      card.style.bottom = st.pos === 'bottom' ? '96px' : 'auto';
+
+      setTimeout(() => {
+        const targetEl = document.getElementById(st.targetId);
+        if (targetEl) { positionCutoutLensAndShields(targetEl); activeTourTarget = targetEl; targetEl.addEventListener('click', advanceSpotlightOnInteract, { once: true }); }
+        AdMobGuard.sync();
+      }, 150);
+
+      card.innerHTML = `
+        <div class="flex justify-between items-center border-b border-[var(--outline)]/20 pb-1">
+          <span class="px-2 py-0.5 rounded-full bg-amber-300 text-[#2B1B10] font-neko font-bold text-[8.5px] flex items-center gap-1">${nekoSvg('medal','w-3.5 h-3.5')}<span>${st.badge}</span></span>
+          <button type="button" onclick="NekoSFX.tap(); endSpotlightTour()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-[10px] font-bold">Saltar ✕</button>
+        </div>
+        <div class="flex items-start gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-amber-100 border-2 border-[#2B1B10] flex items-center justify-center shrink-0">${catAvatarSvg(state.theme)}</div>
+          <div><h4 class="font-neko font-bold text-xs">${st.title}</h4><p class="text-[10.5px] leading-snug mt-0.5">${st.desc}</p></div>
+        </div>
+        <div class="flex items-center justify-between pt-1">
+          ${step > 0 ? `<button type="button" onclick="startSpotlightTour(${step - 1})" class="neko-btn px-2.5 py-1 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[10px]">‹ Anterior</button>` : `<span></span>`}
+          <div class="flex gap-1">${SPOTLIGHT_STAGES.map((_, i) => `<span class="w-1.5 h-1.5 rounded-full ${i === step ? 'bg-[#F97316]' : 'bg-stone-300'}"></span>`).join('')}</div>
+          ${step < SPOTLIGHT_STAGES.length - 1 ? `<button type="button" onclick="startSpotlightTour(${step + 1})" class="neko-btn px-3 py-1 bg-[#F97316] text-white font-bold text-[10px]">Siguiente ›</button>` : `<button type="button" onclick="endSpotlightTour(); switchMainTab('map'); launchNekoCelebration()" class="neko-btn px-3 py-1 bg-emerald-400 text-[#2B1B10] font-bold text-[10px]">¡Comenzar!</button>`}
+        </div>`;
+    }
+
+    function endSpotlightTour() {
+      currentSpotlightStep = -1; detachActiveTourTarget(); toggleFanReportMenu(false, true);
+      document.getElementById('tour-cutout-lens').classList.add('hidden');
+      document.getElementById('tour-spotlight-card').classList.add('hidden');
+      ['tour-lock-top', 'tour-lock-bottom', 'tour-lock-left', 'tour-lock-right'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.add('hidden'); });
+      state.tutorialSeen = true; saveState(); AdMobGuard.sync();
+    }
+
     function haversineMeters(lat1, lon1, lat2, lon2) {
       const R = 6371000, dLat = (lat2 - lat1) * Math.PI / 180, dLon = (lon2 - lon1) * Math.PI / 180;
       const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
@@ -2655,6 +2738,1137 @@
       if (btnNov) btnNov.className = unseenCount > 0 ? 'neko-btn w-9 h-9 rounded-full bg-rose-500 text-white flex-col gap-0.5 relative sos-beacon-pulse' : 'neko-btn w-9 h-9 rounded-full bg-stone-300 text-stone-600 opacity-55 grayscale flex-col gap-0.5 relative';
     }
 
+    function zoomOutOverview() { if (typeof ClusterEngine !== "undefined") ClusterEngine.zoomOutOverview(); }
+    const ClusterEngine = {
+      getRadiusForZoom(z) { return z <= 11.5 ? 0.042 : (z <= 13 ? 0.020 : 0); },
+      collectVisiblePins() {
+        const flt = state.mapPinFilter, pins = [];
+        state.streetItems.forEach(item => {
+          if (flt !== 'all' && flt !== item.type) return;
+          let badge = 'En Calle';
+          if (item.type === 'emergency') badge = item.status === 'in_transit' ? 'Traslado' : 'SOS';
+          else if (item.type === 'colony') badge = 'Colonia';
+          else if (item.ownerClaimed || item.catSafetyType === 'owned_collar') badge = 'Casa';
+          else if (item.catSafetyType === 'tnr_ear') badge = 'TNR';
+          pins.push({ lat: item.lat, lng: item.lng, kind: item.type, subStatus: item.status, overlayKind: 'street', id: item.id, badge, isGrey: false });
+        });
+        if (flt === 'all' || flt === 'shelters') state.shelters.forEach(s => pins.push({ lat: s.lat, lng: s.lng, kind: 'shelter', subStatus: 'open', overlayKind: 'shelter', id: s.id, badge: 'Refugio', isGrey: false }));
+        if (flt === 'all' || flt === 'clinics') state.clinics.forEach(c => pins.push({ lat: c.lat, lng: c.lng, kind: 'clinic', subStatus: c.status, overlayKind: 'clinic', id: c.id, badge: !c.confirmed ? 'Por confirmar' : 'Clínica', isGrey: !c.confirmed }));
+        return pins;
+      },
+      buildClusters(pins, radius) {
+        if (radius <= 0) return pins.map(p => ({ items: [p], lat: p.lat, lng: p.lng }));
+        const groups = [];
+        pins.forEach(p => {
+          const g = groups.find(x => Math.hypot(x.lat - p.lat, x.lng - p.lng) < radius);
+          if (g) { g.items.push(p); g.lat = g.items.reduce((s, i) => s + i.lat, 0) / g.items.length; g.lng = g.items.reduce((s, i) => s + i.lng, 0) / g.items.length; }
+          else groups.push({ lat: p.lat, lng: p.lng, items: [p] });
+        });
+        return groups;
+      },
+      declusterGroup(group) {
+        if (!mapInstance || !group || !group.items.length) return;
+        NekoSFX.tap();
+        if (group.items.length === 1) { showPinCardOverlay(group.items[0].overlayKind, group.items[0].id); return; }
+        mapInstance.flyToBounds(L.latLngBounds(group.items.map(i => [i.lat, i.lng])), { padding: [54, 54], maxZoom: 15, duration: 0.5 });
+      },
+      zoomOutOverview() { if (mapInstance) { closeMapPinCard(); mapInstance.flyTo([20.9865, -89.6250], 11.4, { duration: 0.5 }); notify('Vista por Zonas de Mérida activada.'); } }
+    };
+
+    function createPointedPinIcon(kind, extraBadge, isGreyClinic, subStatus = 'active') {
+      const isTransitSos = kind === 'emergency' && subStatus === 'in_transit';
+      const cfg = {
+        emergency: { bg: isTransitSos ? '#F97316' : '#EF4444', ring: isTransitSos ? ' transit-ring' : ' sos-ring', anim: 'pin-anim-emergency', ico: nekoSvg('sos', 'w-5 h-5'), defaultTag: isTransitSos ? 'Traslado' : 'SOS' },
+        sighting:  { bg: '#38BDF8', ring: '', anim: 'pin-anim-sighting', ico: nekoSvg('cat', 'w-5 h-5'), defaultTag: 'En Calle' },
+        colony:    { bg: '#FBBF24', ring: '', anim: 'pin-anim-colony', ico: nekoSvg('colonyCats', 'w-6 h-6'), defaultTag: 'Colonia' },
+        shelter:   { bg: '#C87D4B', ring: '', anim: 'pin-anim-shelter', ico: nekoSvg('house', 'w-5 h-5'), defaultTag: 'Refugio' },
+        clinic:    { bg: isGreyClinic ? '#9CA3AF' : '#10B981', ring: '', anim: 'pin-anim-clinic', ico: nekoSvg('clinic', 'w-5 h-5'), defaultTag: isGreyClinic ? 'Por confirmar' : 'Clínica' }
+      }[kind] || { bg: '#F97316', ring: '', anim: '', ico: nekoSvg('paw', 'w-5 h-5'), defaultTag: 'Pin' };
+      const label = extraBadge || cfg.defaultTag;
+      const floatingHeart = kind === 'shelter' ? `<span class="pin-floating-heart">${nekoSvg('heart','w-3.5 h-3.5')}</span>` : '';
+      return L.divIcon({
+        className: 'leaflet-div-icon-neko',
+        html: `<div class="neko-pin-wrap ${cfg.anim}">${floatingHeart}<div class="neko-pin-head${cfg.ring}" style="background:${cfg.bg}"><span class="neko-pin-tag">${label}</span>${cfg.ico}</div><div class="neko-pin-tip"></div><div class="neko-pin-dot"></div></div>`,
+        iconSize: [44, 52], iconAnchor: [22, 50]
+      });
+    }
+
+    function initMap() {
+      if (mapInstance) return;
+      const el = document.getElementById('merida-map');
+      if (!el || typeof L === 'undefined') return;
+      mapInstance = L.map('merida-map', { center: [state.userCoords.lat, state.userCoords.lng], zoom: 12.5, zoomControl: false, attributionControl: false });
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(mapInstance);
+      markersLayer = L.layerGroup().addTo(mapInstance);
+      mapInstance.on('zoomend', () => renderHomeMapTab());
+      mapInstance.on('click', e => {
+        toggleFanReportMenu(false, true);
+        if (!document.getElementById('map-pin-card').classList.contains('hidden')) closeMapPinCard();
+        if (dragTempMarker) {
+          dragTempMarker.setLatLng(e.latlng);
+          const cEl = document.getElementById('drag-pin-coords');
+          if (cEl) cEl.textContent = `${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+        }
+      });
+      setTimeout(() => mapInstance.invalidateSize(), 200);
+    }
+
+    function zoomMap(d) { if (mapInstance) mapInstance.setZoom(mapInstance.getZoom() + d); }
+
+    function centerOnUserGPS(userClicked) {
+      if (!navigator.geolocation) { if (userClicked && mapInstance) mapInstance.flyTo([state.userCoords.lat, state.userCoords.lng], 15, { duration: 0.5 }); return; }
+      navigator.geolocation.getCurrentPosition(pos => {
+        state.userCoords = { lat: Number(pos.coords.latitude.toFixed(5)), lng: Number(pos.coords.longitude.toFixed(5)), accuracy: Math.round(pos.coords.accuracy || 6) };
+        saveState(); renderHomeMapTab();
+        if (userClicked && mapInstance) { mapInstance.invalidateSize(); mapInstance.flyTo([state.userCoords.lat, state.userCoords.lng], 16, { duration: 0.5 }); notify(`Ubicación GPS centrada (${state.userCoords.lat}, ${state.userCoords.lng})`); }
+      }, () => { if (userClicked && mapInstance) mapInstance.flyTo([state.userCoords.lat, state.userCoords.lng], 14, { duration: 0.5 }); }, { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 });
+    }
+
+    function setMapPinFilter(flt) {
+      if (state.mapPinFilter === flt) { NekoSFX.alreadyActive(); return; }
+      NekoSFX.tap();
+      state.mapPinFilter = flt;
+      ['all', 'emergency', 'sighting', 'colony', 'shelters', 'clinics'].forEach(k => {
+        const b = document.getElementById(`mfilter-${k}`);
+        if (b) { const badge = b.querySelector('.badge-num'); b.className = `neko-btn px-2.5 py-1 text-[10px] font-bold whitespace-nowrap gap-1 relative ${k === flt ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}`; if (badge) b.appendChild(badge); }
+      });
+      closeMapPinCard(); renderHomeMapTab();
+    }
+
+    function jumpToMapFilterPin(filterType) {
+      if (state.mainTab === 'map' && state.mapPinFilter === filterType) NekoSFX.alreadyActive();
+      else NekoSFX.tap();
+      switchMainTab('map', true);
+      state.mapPinFilter = filterType;
+      ['all', 'emergency', 'sighting', 'colony', 'shelters', 'clinics'].forEach(k => {
+        const b = document.getElementById(`mfilter-${k}`);
+        if (b) { const badge = b.querySelector('.badge-num'); b.className = `neko-btn px-2.5 py-1 text-[10px] font-bold whitespace-nowrap gap-1 relative ${k === filterType ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}`; if (badge) b.appendChild(badge); }
+      });
+      renderHomeMapTab();
+      if (filterType === 'clinics') { const t = state.clinics.find(c => !c.confirmed) || state.clinics[0]; if (t) showPinCardOverlay('clinic', t.id); }
+      else { const t = state.streetItems.find(i => i.type === filterType) || state.streetItems[0]; if (t) showPinCardOverlay('street', t.id); else notify('Sin reportes activos en esta categoría. Toca la patita Reportar para crear uno.'); }
+    }
+
+    function renderHomeMapTab() {
+      initMap(); if (!markersLayer) return; markersLayer.clearLayers();
+      const zoom = mapInstance ? mapInstance.getZoom() : 12.5;
+      L.circle([state.userCoords.lat, state.userCoords.lng], { radius: 35, color: '#10B981', fillColor: '#10B981', fillOpacity: 0.18, weight: 1.5 }).addTo(markersLayer);
+      L.marker([state.userCoords.lat, state.userCoords.lng], { icon: L.divIcon({ className: 'leaflet-div-icon-neko', html: `<div class="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-md"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) }).addTo(markersLayer);
+
+      const groups = ClusterEngine.buildClusters(ClusterEngine.collectVisiblePins(), ClusterEngine.getRadiusForZoom(zoom));
+      groups.forEach(g => {
+        if (g.items.length > 1) {
+          const hasSos = g.items.some(i => i.kind === 'emergency');
+          const cIcon = L.divIcon({
+            className: 'leaflet-div-icon-neko',
+            html: `<div class="neko-pin-wrap ${hasSos ? 'pin-anim-emergency' : 'pin-anim-colony'}"><div class="neko-pin-head ${hasSos ? 'sos-ring' : ''}" style="background:${hasSos ? '#EF4444' : '#F97316'};color:#FFF;font-family:Fredoka;font-weight:700;font-size:11px"><span class="neko-pin-tag">${hasSos ? 'Zona SOS' : 'Zona'}</span>${g.items.length}</div><div class="neko-pin-tip"></div><div class="neko-pin-dot"></div></div>`,
+            iconSize: [44, 52], iconAnchor: [22, 50]
+          });
+          L.marker([g.lat, g.lng], { icon: cIcon }).on('click', e => { L.DomEvent.stopPropagation(e); ClusterEngine.declusterGroup(g); }).addTo(markersLayer);
+        } else {
+          const p = g.items[0];
+          L.marker([p.lat, p.lng], { icon: createPointedPinIcon(p.kind, p.badge, p.isGrey, p.subStatus) }).on('click', e => { L.DomEvent.stopPropagation(e); showPinCardOverlay(p.overlayKind, p.id); }).addTo(markersLayer);
+        }
+      });
+    }
+
+    function closeMapPinCard() { document.getElementById('map-pin-card').classList.add('hidden'); AdMobGuard.sync(); }
+
+    function jumpToEntityCard(kind, id) {
+      closeMapPinCard();
+      if (kind === 'shelter') { switchMainTab('shelters'); setSubTab('shelters', 'list', true); }
+      else { switchMainTab('clinics'); setSubTab('clinics', 'triage', true); }
+      setTimeout(() => {
+        const el = document.getElementById(`entity-card-${id}`);
+        if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.classList.add('ring-4', 'ring-amber-400'); setTimeout(() => el.classList.remove('ring-4', 'ring-amber-400'), 1800); }
+      }, 120);
+    }
+
+    function showPinCardOverlay(kind, id, silent = false) {
+      const box = document.getElementById('map-pin-card'); if (!box) return;
+      if (!silent) NekoSFX.modal();
+      toggleFanReportMenu(false, true);
+      const isAdmin = state.session.role === 'admin';
+      if (kind === 'street') {
+        const item = state.streetItems.find(x => x.id === id); if (!item) return;
+        item.seenNovelty = true; updateAllLogicalBadges();
+        if (mapInstance && !silent) mapInstance.flyTo([item.lat, item.lng], 15, { duration: 0.4 });
+        const confirmed = (item.paScore || 1) >= (item.paRequired || 3);
+        const firstImg = (item.folderPhotos || []).find(p => p.imgData)?.imgData || '';
+        const isSos = item.type === 'emergency', isTransit = item.status === 'in_transit', following = isPinFollowed(item.id);
+        const isCreator = item.creatorKey && item.creatorKey === getUserUniqueKey();
+        const waBtn = item.allowPublicWa && item.reporterWa
+          ? `<a href="https://wa.me/${item.reporterWa}?text=${encodeURIComponent(`¡Hola! Vi tu reporte "${item.title}" en MishiMaya Mérida y quiero ayudar.`)}" target="_blank" rel="noopener noreferrer" class="neko-btn py-1.5 bg-emerald-400 text-[#2B1B10] font-bold text-[8.5px] gap-0.5">${nekoSvg('chat','w-3 h-3')}<span>WA Directo</span></a>`
+          : `<button type="button" onclick="openInAppPinAlertModal('${item.id}')" class="neko-btn py-1.5 bg-emerald-300 text-[#2B1B10] font-bold text-[8.5px] gap-0.5">${nekoSvg('bell','w-3 h-3')}<span>Red (${(item.inAppMessages || []).length})</span></button>`;
+
+        box.innerHTML = `
+          <div class="space-y-1.5 text-[11px]">
+            <div class="flex justify-between items-start gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="px-2 py-0.5 rounded-md ${isTransit ? 'bg-orange-400 text-white' : (confirmed ? 'bg-emerald-200 text-[#2B1B10]' : 'bg-amber-200 text-[#2B1B10]')} border border-[#2B1B10] font-neko font-bold text-[8px]">${isTransit ? '🟠 En traslado' : (confirmed ? '✓ Presencia confirmada' : '⏳ Por confirmar')}</span>
+                  <button type="button" onclick="toggleFollowPin('${item.id}')" class="px-2 py-0.5 rounded-full ${following ? 'bg-sky-300' : 'bg-stone-200'} text-[#2B1B10] border border-[#2B1B10] font-neko font-bold text-[8px]">${following ? '🔔 Siguiendo ✓' : '🔕 Seguir'}</button>
+                  <button type="button" onclick="openReportInappropriateModal('street','${item.id}','${item.title.replace(/'/g, '')}',${item.lat},${item.lng})" class="px-1.5 py-0.5 rounded bg-rose-200 text-rose-950 border border-[#2B1B10] font-neko font-bold text-[8px]">🚩 Reportar</button>
+                </div>
+                <h4 class="font-neko font-bold text-xs mt-1 truncate">${item.title}</h4>
+                <p class="text-[9.5px] opacity-85">${item.details}</p>
+              </div>
+              <button type="button" onclick="NekoSFX.tap(); closeMapPinCard()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-[10px] font-bold">✕</button>
+            </div>
+            <button type="button" onclick="openFullScreenSosModal('${item.id}')" class="w-full neko-btn py-1.5 bg-[#F97316] text-white font-bold text-[10px] shadow-md">🔍 Ver Ficha Completa del Caso ➔</button>
+            ${isSos ? (isTransit
+              ? `<div class="p-1.5 rounded-lg bg-amber-200 border border-[#2B1B10] space-y-1 text-[9.5px]">
+                   <div class="flex items-center justify-between"><span><strong>En traslado:</strong> ${item.responderName}</span><button type="button" onclick="completeSosRescue('${item.id}')" class="neko-btn px-2 py-0.5 bg-emerald-400 text-[#2B1B10] font-bold text-[8.5px]">✓ Ingresado</button></div>
+                   <button type="button" onclick="releaseSosBackToRed('${item.id}')" class="w-full neko-btn py-1 bg-rose-500 text-white font-bold text-[9px]">🔴 No pude capturarlo (Devolver a SOS Rojo)</button>
+                 </div>`
+              : `<button type="button" onclick="takeChargeOfSosPin('${item.id}')" class="w-full neko-btn py-1.5 bg-rose-600 text-white font-bold text-[10px] sos-beacon-pulse">🚑 Tomar a cargo este SOS (Cambiar Pin a Naranja)</button>`) : ''}
+            <div class="grid grid-cols-4 gap-1">
+              <button type="button" onclick="openStreetFolderModal('${item.id}')" class="neko-btn py-1.5 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[8.5px]">Fotos (${(item.folderPhotos || []).length})</button>
+              <button type="button" onclick="openP2PVerifyModal('street','${item.id}')" class="neko-btn py-1.5 bg-amber-400 text-[#2B1B10] font-bold text-[8.5px]">Confirmar</button>
+              ${waBtn}
+              <button type="button" onclick="openSocialPosterGenerator('${isSos ? 'URGENCIA SOS' : 'REPORTE EN CALLE'}','${item.title.replace(/'/g, '')}','${item.details.replace(/'/g, '')}','Coord: ${item.lat}, ${item.lng}','Red Cívica MishiMaya Mérida','${firstImg}')" class="neko-btn py-1.5 bg-sky-300 text-[#2B1B10] font-bold text-[8.5px] gap-0.5">${nekoSvg('share','w-3 h-3')}<span>Compartir</span></button>
+            </div>
+            ${isCreator ? `<button type="button" onclick="deleteOwnPin('${item.id}')" class="w-full neko-btn py-1 bg-rose-200 text-rose-950 font-bold text-[9px]">🗑️ Eliminar mi propio reporte</button>` : ''}
+            ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('street','${item.id}','${item.title.replace(/'/g, '')}')" class="w-full neko-btn py-1 bg-purple-400 text-[#2B1B10] font-bold text-[9.5px]">👑 Administrador: Eliminar Pin</button>` : ''}
+          </div>`;
+      } else {
+        const ent = (kind === 'clinic' ? state.clinics : state.shelters).find(x => x.id === id); if (!ent) return;
+        ent.seenNovelty = true; updateAllLogicalBadges();
+        if (mapInstance && !silent) mapInstance.flyTo([ent.lat, ent.lng], 15, { duration: 0.4 });
+        const isGrey = kind === 'clinic' && !ent.confirmed, isClinic = kind === 'clinic';
+        const repPts = ent.reputationPts !== undefined ? ent.reputationPts : (isGrey ? 0 : 500);
+        box.innerHTML = `
+          <div class="space-y-1.5 text-[11px]">
+            <div class="flex justify-between items-start gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1 flex-wrap">
+                  <span class="px-2 py-0.5 rounded-full ${isGrey ? 'bg-stone-300' : 'bg-emerald-300'} text-[#2B1B10] font-neko font-bold text-[8.5px]">${isGrey ? `⚪ Por confirmar (${ent.paScore || 1}/6 PA)` : `⭐ Reputación P2P: ${repPts} / 1000 pts`}</span>
+                  <button type="button" onclick="openReportInappropriateModal('${kind}','${ent.id}','${ent.name.replace(/'/g, '')}',${ent.lat},${ent.lng})" class="px-1.5 py-0.5 rounded bg-rose-200 text-rose-950 border border-[#2B1B10] font-neko font-bold text-[8px]">🚩 Reportar</button>
+                </div>
+                <h4 class="font-neko font-bold text-xs mt-0.5 truncate">${ent.name}</h4>
+                <p class="text-[9.5px] opacity-85 truncate">${ent.zone} • ${ent.hours}</p>
+              </div>
+              <button type="button" onclick="NekoSFX.tap(); closeMapPinCard()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-[10px] font-bold">✕</button>
+            </div>
+            <div class="grid grid-cols-4 gap-1">
+              <button type="button" onclick="openEntityDetailModal('${kind}','${ent.id}','campaigns',true)" class="neko-btn py-1.5 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[8.5px]">Vista Rápida</button>
+              <button type="button" onclick="NekoSFX.tap(); jumpToEntityCard('${kind}','${ent.id}')" class="neko-btn py-1.5 bg-[#F97316] text-white font-bold text-[8.5px]">Ir a Ficha ➔</button>
+              <button type="button" onclick="openP2PVerifyModal('${kind}','${ent.id}')" class="neko-btn py-1.5 bg-amber-400 text-[#2B1B10] font-bold text-[8.5px]">⭐ Opinar</button>
+              <button type="button" onclick="openSocialPosterGenerator('${isClinic ? 'CLÍNICA FELINA' : 'REFUGIO'}','${ent.name.replace(/'/g, '')}','${ent.zone} • ${ent.hours}','Servicios: ${(ent.services || []).join(', ')}','Reputación P2P: ${repPts}/1000 pts')" class="neko-btn py-1.5 bg-sky-300 text-[#2B1B10] font-bold text-[8.5px]">Compartir</button>
+            </div>
+            ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('${kind}','${ent.id}','${ent.name.replace(/'/g, '')}')" class="w-full neko-btn py-1 bg-purple-400 text-[#2B1B10] font-bold text-[9.5px]">👑 Administrador: Eliminar ${isClinic ? 'Clínica' : 'Refugio'}</button>` : ''}
+          </div>`;
+      }
+      box.classList.remove('hidden'); AdMobGuard.sync();
+    }
+
+    function setAdoptSectionFilter(flt) {
+      if (state.adoptFilter === flt) { NekoSFX.alreadyActive(); return; }
+      NekoSFX.tap(); state.adoptFilter = flt;
+      ['all', 'shelter', 'clinic', 'volunteer'].forEach(k => {
+        const b = document.getElementById(`adflt-${k}`);
+        if (b) b.className = `neko-btn py-1.5 font-bold ${k === flt ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}`;
+      });
+      renderAdoptSectionTab();
+    }
+
+    function renderAdoptSectionTab() {
+      const container = document.getElementById('swipe-area-adopt'); if (!container) return;
+      const flt = state.adoptFilter || 'all';
+      const isAdmin = state.session.role === 'admin';
+      const list = state.adoptions.filter(a => {
+        if (flt === 'all') return true;
+        if (flt === 'volunteer') return a.origin === 'volunteer';
+        return a.origin !== 'volunteer' && a.entityType === flt;
+      });
+      if (!list.length) {
+        container.innerHTML = `
+          <div class="neko-card p-4 text-center space-y-2.5">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-amber-100 border-2 border-[#2B1B10] flex items-center justify-center">${catAvatarSvg(state.theme)}</div>
+            <h4 class="font-neko font-bold text-sm">Aún no hay michis publicados en esta categoría</h4>
+            <p class="text-[10.5px] opacity-85">Todas las adopciones en MishiMaya son reales y bajo Protocolo Estricto 100% Interior (cero salida a la calle).</p>
+            <button type="button" onclick="openVolunteerPublishModal('adopt','shelter')" class="neko-btn px-4 py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">+ Publicar Michi en Adopción Responsable</button>
+          </div>`;
+        return;
+      }
+      container.innerHTML = list.map(cat => {
+        const isAvail = cat.status === 'available';
+        return `
+          <div class="neko-card p-3 space-y-2 text-[11px]">
+            <div class="flex items-center justify-between gap-1">
+              <span class="px-2 py-0.5 rounded-full ${isAvail ? 'bg-emerald-300' : 'bg-amber-300'} text-[#2B1B10] font-neko font-bold text-[8.5px]">${isAvail ? 'DISPONIBLE (100% INTERIOR)' : 'EN EVALUACIÓN'}</span>
+              <div class="flex items-center gap-1">
+                <span class="text-[9px] font-neko font-bold truncate max-w-[130px]">${cat.entityName}</span>
+                <button type="button" onclick="openReportInappropriateModal('adopt','${cat.id}','${cat.name.replace(/'/g, '')}')" class="px-1.5 py-0.5 rounded bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
+                ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('adopt','${cat.id}','${cat.name.replace(/'/g, '')}')" class="px-1.5 py-0.5 rounded bg-purple-300 text-[#2B1B10] font-bold text-[8px]">👑</button>` : ''}
+              </div>
+            </div>
+            <div class="flip-card" onclick="NekoSFX.flip(); this.classList.toggle('flipped')">
+              <div class="flip-inner">
+                <div class="flip-front neko-subcard">
+                  <div class="flex items-center gap-2">
+                    ${cat.photoUrl ? `<img src="${cat.photoUrl}" onclick="event.stopPropagation(); openPhotoLightbox('${cat.photoUrl}','${cat.name.replace(/'/g, '')}')" class="w-12 h-12 rounded-lg object-cover border border-[#2B1B10] shrink-0 zoomable-photo" />` : `<div class="w-10 h-10 rounded-lg bg-amber-100 border border-[#2B1B10] flex items-center justify-center shrink-0">${catAvatarSvg(cat.coat)}</div>`}
+                    <div><h4 class="font-neko font-bold text-xs">${cat.name}</h4><p class="text-[9.5px] font-bold opacity-80">${cat.health}</p></div>
+                  </div>
+                  <p class="text-[10px] font-semibold line-clamp-2">${cat.afterDesc}</p>
+                  <span class="text-[8.5px] font-neko font-bold text-[#F97316] text-right">Toca la tarjeta para girar Antes / Hoy ➔</span>
+                </div>
+                <div class="flip-back bg-amber-100 border border-[#2B1B10] text-[#2B1B10]">
+                  <div><span class="px-1.5 py-0.2 rounded bg-rose-500 text-white font-neko font-bold text-[8px]">HISTORIA ANTES DEL RESCATE</span><p class="text-[10px] font-semibold mt-1">${cat.beforeDesc}</p></div>
+                  <span class="text-[8.5px] font-neko font-bold text-right">Volver a HOY ➔</span>
+                </div>
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-1.5">
+              <button type="button" onclick="openFullScreenAdoptionModal('${cat.id}')" class="neko-btn py-1.5 bg-[#F97316] text-white font-bold text-[9.5px]">Ficha Completa ${isAvail ? '<span class="action-tag-notif">1</span>' : ''}</button>
+              <button type="button" onclick="openSocialPosterGenerator('ADOPCIÓN 100% INTERIOR','${cat.name.replace(/'/g, '')}','${cat.afterDesc.replace(/'/g, '')}','Responsable: ${cat.entityName}','${cat.health}','${cat.photoUrl || ''}')" class="neko-btn py-1.5 bg-sky-300 text-[#2B1B10] font-bold text-[9.5px]">Compartir</button>
+              <a href="https://wa.me/${cat.whatsapp}" target="_blank" rel="noopener noreferrer" class="neko-btn py-1.5 bg-emerald-400 text-[#2B1B10] font-bold text-[9.5px]">WhatsApp</a>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function openFullScreenAdoptionModal(adoptId) {
+      const cat = state.adoptions.find(x => x.id === adoptId); if (!cat) return;
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <span class="px-2 py-0.5 rounded-full bg-emerald-300 text-[#2B1B10] font-neko font-bold text-[8.5px]">EXPEDIENTE DE ADOPCIÓN A PANTALLA COMPLETA</span>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <div class="space-y-2.5 text-[11px]">
+          ${cat.photoUrl ? `<img src="${cat.photoUrl}" onclick="openPhotoLightbox('${cat.photoUrl}','${cat.name.replace(/'/g, '')}')" class="w-full max-h-64 object-contain rounded-xl border-2 border-[#2B1B10] bg-black/5 mx-auto zoomable-photo" />` : ''}
+          <div><h3 class="font-neko font-bold text-sm">${cat.name}</h3><p class="text-[10px] font-bold opacity-80">Gestionado por: ${cat.entityName} • Salud: ${cat.health}</p></div>
+          <div class="p-2.5 neko-subcard space-y-1">
+            <p class="text-[10px]"><strong>Antes del rescate:</strong> ${cat.beforeDesc}</p>
+            <p class="text-[10px]"><strong>Estado actual:</strong> ${cat.afterDesc}</p>
+          </div>
+          <form onsubmit="submitIndoorAdoptionRequest(event,'${cat.id}')" class="p-2.5 rounded-xl bg-rose-100 border-2 border-rose-800 text-rose-950 space-y-2 text-[10px]">
+            <p class="font-neko font-bold text-[10.5px]">COMPROMISO OBLIGATORIO DE ADOPCIÓN RESPONSABLE:</p>
+            <label class="flex items-start gap-1.5 cursor-pointer">
+              <input type="checkbox" required class="mt-0.5 rounded" />
+              <span>Soy mayor de 18 años, acepto el protocolo de adopción responsable y me comprometo a que <strong>${cat.name} JAMÁS tendrá acceso a la calle ni saldrá de la casa o propiedad</strong>.</span>
+            </label>
+            <button type="submit" class="w-full neko-btn py-2 bg-[#F97316] text-white font-bold text-xs">Confirmar Compromiso 100% Interior y Solicitar Adopción</button>
+          </form>
+        </div>`);
+    }
+
+    function submitIndoorAdoptionRequest(ev, adoptId) {
+      ev.preventDefault();
+      const cat = state.adoptions.find(x => x.id === adoptId); if (!cat) return;
+      cat.status = 'evaluating'; state.karma += 50;
+      syncVolunteerAuthorityFromKarma();
+      closeCenterModal(); renderAll(); animateKarmaExpBar(); launchNekoCelebration();
+      window.open(`https://wa.me/${cat.whatsapp}?text=${encodeURIComponent(`¡Hola! Solicito adoptar a ${cat.name} bajo el Protocolo de Adopción Responsable 100% Interior (sin salida a la calle).`)}`, '_blank', 'noopener');
+    }
+
+    function setSosSubTab(sub) {
+      if (state.subTabs.sos === sub) { NekoSFX.alreadyActive(); return; }
+      NekoSFX.tap(); state.subTabs.sos = sub;
+      ['emergency', 'sighting', 'colony', 'volunteers'].forEach(k => {
+        const b = document.getElementById(`subbtn-sos-${k}`);
+        if (b) {
+          const badge = b.querySelector('.badge-num');
+          b.className = `neko-btn py-1.5 text-[9px] font-bold gap-0.5 relative ${k === sub ? (k === 'emergency' ? 'bg-rose-600 text-white' : 'bg-[#F97316] text-white') : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}`;
+          if (badge) b.appendChild(badge);
+        }
+      });
+      renderSosSectionTab();
+    }
+
+    function renderSosSectionTab() {
+      const container = document.getElementById('swipe-area-sos'); if (!container) return;
+      const sub = state.subTabs.sos || 'emergency';
+      const isAdmin = state.session.role === 'admin';
+
+      if (sub === 'volunteers') {
+        const volCamps = state.campaigns.filter(c => c.origin === 'volunteer');
+        const volSups = state.supplies.filter(s => s.origin === 'volunteer' && !s.fulfilled);
+        const topActions = `
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" onclick="openVolunteerPublishModal('campaigns','volunteer')" class="neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-[10px] gap-0.5">${nekoSvg('plus','w-3 h-3')}<span>Campaña Médica (Con Receta)</span></button>
+            <button type="button" onclick="openAddSupplyModal('volunteer')" class="neko-btn py-2 bg-amber-300 text-[#2B1B10] font-bold text-[10px] gap-0.5">${nekoSvg('plus','w-3 h-3')}<span>Solicitar Insumo Voluntario</span></button>
+          </div>`;
+        const campsHtml = volCamps.map(c => {
+          const pct = Math.min(100, Math.round((c.raisedMxn / c.targetMxn) * 100));
+          const canConfirm = c.creatorKey === getUserUniqueKey() || isAdmin;
+          return `
+            <div class="neko-card p-3 space-y-1.5 text-[11px] campaign-beacon-pulse">
+              <div class="flex justify-between items-start gap-1">
+                <div><span class="px-1.5 py-0.5 rounded bg-amber-300 text-[#2B1B10] font-neko font-bold text-[8px]">CAMPAÑA VOLUNTARIA CON RECETA</span><h4 class="font-neko font-bold text-xs mt-0.5">${c.catName}</h4><p class="text-[9.5px] opacity-80">${c.entityName}</p></div>
+                <div class="flex items-center gap-1">
+                  ${c.recetaImg ? `<button type="button" onclick="viewMedicalReceiptModal('${c.id}')" class="neko-btn px-2 py-0.5 bg-sky-200 text-[#2B1B10] font-bold text-[8.5px]">Ver Receta</button>` : ''}
+                  <button type="button" onclick="openReportInappropriateModal('campaign','${c.id}','${c.catName.replace(/'/g, '')}')" class="px-1.5 py-0.5 rounded bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
+                  ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('campaign','${c.id}','${c.catName.replace(/'/g, '')}')" class="px-1.5 py-0.5 rounded bg-purple-300 text-[#2B1B10] font-bold text-[8px]">👑</button>` : ''}
+                </div>
+              </div>
+              ${c.catImg ? `<img src="${c.catImg}" onclick="openPhotoLightbox('${c.catImg}','${c.catName.replace(/'/g, '')}')" class="w-full max-h-40 object-contain rounded-lg border border-[#2B1B10] zoomable-photo" />` : ''}
+              <p class="text-[10px]">${c.desc}</p>
+              <div class="w-full h-2 rounded-full bg-stone-300 border border-[#2B1B10] overflow-hidden"><div class="bg-emerald-500 h-full" style="width:${pct}%"></div></div>
+              ${c.pendingMxn > 0 ? `<div class="p-1.5 rounded bg-amber-100 border border-[#2B1B10] flex justify-between items-center text-[9.5px]"><span>+$${c.pendingMxn} MXN por confirmar</span>${canConfirm ? `<button type="button" onclick="confirmCampaignSpeiByEntity('${c.id}')" class="neko-btn px-2 py-0.5 bg-emerald-400 text-[#2B1B10] font-bold">Confirmar</button>` : ''}</div>` : ''}
+              <div class="grid grid-cols-2 gap-1.5">
+                <button type="button" onclick="openDonationHubModal('${c.id}')" class="neko-btn py-1.5 bg-emerald-400 text-[#2B1B10] font-bold text-[9.5px]">Donar SPEI <span class="action-tag-notif">1</span></button>
+                <a href="https://wa.me/${c.whatsapp}" target="_blank" rel="noopener noreferrer" class="neko-btn py-1.5 bg-amber-300 text-[#2B1B10] font-bold text-[9.5px]">WhatsApp</a>
+              </div>
+            </div>`;
+        }).join('');
+        const supsHtml = volSups.map(s => `
+          <div class="neko-card p-2.5 space-y-1.5 text-[11px]">
+            <div class="flex items-center justify-between gap-2">
+              <div><span class="px-1.5 py-0.2 rounded bg-amber-300 text-[#2B1B10] font-neko font-bold text-[8px]">INSUMO VOLUNTARIO</span><p class="font-neko font-bold text-xs mt-0.5">${s.title} <span class="action-tag-notif">1</span></p><p class="text-[9.5px] opacity-80">${s.sub}</p></div>
+              <div class="flex items-center gap-1">
+                <button type="button" onclick="notifySupplyPurchaseToEntity('${s.id}')" class="neko-btn px-2.5 py-1.5 bg-amber-400 text-[#2B1B10] font-bold text-[9.5px] shrink-0">${s.pendingConfirm ? 'Notificado' : 'Apoyar'}</button>
+                <button type="button" onclick="openReportInappropriateModal('supply','${s.id}','${s.title.replace(/'/g, '')}')" class="px-1.5 py-1 rounded bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
+              </div>
+            </div>
+            ${s.pendingConfirm ? `<button type="button" onclick="confirmSupplyReceivedByEntity('${s.id}')" class="w-full neko-btn py-1 bg-emerald-400 text-[#2B1B10] font-bold text-[9px]">✓ Confirmar Recepción y Retirar</button>` : ''}
+          </div>`).join('');
+        container.innerHTML = topActions + (campsHtml || supsHtml ? (campsHtml + supsHtml) : `<div class="neko-card p-4 text-center text-[10.5px] opacity-85">Espacio independiente para campañas urgentes (con receta veterinaria) y listas de insumos de voluntarios.</div>`);
+        return;
+      }
+
+      const list = state.streetItems.filter(i => i.type === sub);
+      const emptyMeta = {
+        emergency: { ico: 'sos', bg: 'bg-rose-100', btnBg: 'bg-rose-500 text-white', title: 'Sin emergencias SOS activas en este momento', btnTxt: 'Posicionar Nuevo SOS en el Mapa' },
+        sighting:  { ico: 'cat', bg: 'bg-sky-100', btnBg: 'bg-sky-400 text-[#2B1B10]', title: 'Sin pines azules (gatos en calle o perdidos) hoy', btnTxt: 'Posicionar Pin En Calle en el Mapa' },
+        colony:    { ico: 'colonyCats', bg: 'bg-amber-100', btnBg: 'bg-amber-400 text-[#2B1B10]', title: 'Sin colonias felinas reportadas aún', btnTxt: 'Censar Nueva Colonia en el Mapa' }
+      }[sub] || { ico: 'sos', bg: 'bg-rose-100', btnBg: 'bg-rose-500 text-white', title: 'Sin reportes', btnTxt: 'Reportar' };
+
+      if (!list.length) {
+        container.innerHTML = `
+          <div class="neko-card p-4 text-center space-y-2.5">
+            <div class="w-12 h-12 mx-auto rounded-2xl ${emptyMeta.bg} border-2 border-[#2B1B10] flex items-center justify-center">${nekoSvg(emptyMeta.ico,'w-6 h-6')}</div>
+            <h4 class="font-neko font-bold text-sm">${emptyMeta.title}</h4>
+            <button type="button" onclick="startDirectMapReportFlow('${sub}')" class="neko-btn px-4 py-2 ${emptyMeta.btnBg} font-bold text-xs gap-1.5">${nekoSvg('plus','w-4 h-4')}<span>${emptyMeta.btnTxt}</span></button>
+          </div>`;
+        return;
+      }
+
+      container.innerHTML = list.map(item => {
+        const firstImg = (item.folderPhotos || []).find(p => p.imgData)?.imgData || '';
+        const isTransit = item.status === 'in_transit';
+        const isCreator = item.creatorKey && item.creatorKey === getUserUniqueKey();
+        return `
+          <div class="neko-card p-3 space-y-2 text-[11px] ${item.type === 'emergency' ? 'sos-beacon-pulse' : ''}">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 rounded-full ${isTransit ? 'bg-orange-400 text-white' : (item.type === 'emergency' ? 'bg-rose-600 text-white' : (item.type === 'colony' ? 'bg-amber-300 text-[#2B1B10]' : 'bg-sky-300 text-[#2B1B10]'))} font-neko font-bold text-[8.5px]">${isTransit ? 'EN TRASLADO' : (item.type === 'emergency' ? 'URGENCIA SOS' : (item.type === 'colony' ? 'COLONIA CENSADA' : 'PIN AZUL • EN CALLE'))}</span>
+              <div class="flex items-center gap-1">
+                <span class="font-mono text-[9px] font-bold">${item.lat}, ${item.lng}</span>
+                <button type="button" onclick="openReportInappropriateModal('street','${item.id}','${item.title.replace(/'/g, '')}',${item.lat},${item.lng})" class="px-1.5 py-0.5 rounded bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
+              </div>
+            </div>
+            <div class="flex items-start gap-2.5">
+              ${firstImg ? `<img src="${firstImg}" onclick="openPhotoLightbox('${firstImg}','${item.title.replace(/'/g, '')}')" class="w-16 h-16 rounded-xl object-cover border-2 border-[#2B1B10] shrink-0 zoomable-photo" />` : `<div class="w-12 h-12 rounded-xl bg-amber-100 border border-[#2B1B10] flex items-center justify-center shrink-0">${nekoSvg(item.type === 'emergency' ? 'sos' : (item.type === 'colony' ? 'colonyCats' : 'cat'),'w-6 h-6')}</div>`}
+              <div class="min-w-0 flex-1"><h4 class="font-neko font-bold text-xs">${item.title}</h4><p class="text-[10px] opacity-85 mt-0.5">${item.details}</p></div>
+            </div>
+            ${isTransit ? `<button type="button" onclick="releaseSosBackToRed('${item.id}')" class="w-full neko-btn py-1 bg-rose-500 text-white font-bold text-[9.5px]">🔴 No pude capturarlo (Devolver a SOS Rojo)</button>` : ''}
+            <button type="button" onclick="openFullScreenSosModal('${item.id}')" class="w-full neko-btn py-1.5 bg-[#F97316] text-white font-bold text-[10px] shadow-md">🔍 Ver Ficha Completa del Caso ➔</button>
+            <div class="grid grid-cols-3 gap-1">
+              <button type="button" onclick="jumpFromSosTabToMapPin('${item.id}')" class="neko-btn py-1.5 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[9px]">Ir al Pin 📍</button>
+              <button type="button" onclick="openInAppPinAlertModal('${item.id}')" class="neko-btn py-1.5 bg-emerald-400 text-[#2B1B10] font-bold text-[9px]">Ayudar (${(item.inAppMessages || []).length})</button>
+              <button type="button" onclick="openSocialPosterGenerator('REPORTE EN MAPA','${item.title.replace(/'/g, '')}','${item.details.replace(/'/g, '')}','Coord: ${item.lat}, ${item.lng}','Red Cívica MishiMaya Mérida','${firstImg}')" class="neko-btn py-1.5 bg-sky-300 text-[#2B1B10] font-bold text-[9px]">Compartir</button>
+            </div>
+            ${isCreator ? `<button type="button" onclick="deleteOwnPin('${item.id}')" class="w-full neko-btn py-1 bg-rose-200 text-rose-950 font-bold text-[9px]">🗑️ Eliminar mi propio reporte</button>` : ''}
+            ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('street','${item.id}','${item.title.replace(/'/g, '')}')" class="w-full neko-btn py-1 bg-purple-400 text-[#2B1B10] font-bold text-[9px]">👑 Administrador: Eliminar Pin</button>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    function jumpFromSosTabToMapPin(pinId) {
+      const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      switchMainTab('map', true); setMapPinFilter('all');
+      setTimeout(() => showPinCardOverlay('street', item.id), 150);
+    }
+
+    function openFullScreenSosModal(pinId) {
+      const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      const firstImg = (item.folderPhotos || []).find(p => p.imgData)?.imgData || '';
+      const isCreator = item.creatorKey && item.creatorKey === getUserUniqueKey();
+      const photosHtml = (item.folderPhotos || []).map((p, idx) => `<div class="p-2 neko-subcard space-y-1"><div class="flex justify-between items-center"><span class="px-1.5 py-0.5 rounded bg-amber-300 text-[#2B1B10] font-neko font-bold text-[8.5px]">${p.label}</span><button type="button" onclick="openReportInappropriateModal('photo','${idx}','Foto en ${item.title.replace(/'/g, '')}',${item.lat},${item.lng},'${item.id}')" class="px-1.5 py-0.5 rounded bg-rose-200 text-rose-950 font-bold text-[8px]">🚩 Reportar Foto</button></div>${p.imgData ? `<img src="${p.imgData}" onclick="openPhotoLightbox('${p.imgData}','${p.note.replace(/'/g, '')}')" class="w-full max-h-60 object-contain rounded-lg border border-[#2B1B10] zoomable-photo" />` : ''}<p class="text-[10px] font-semibold">${p.note}</p></div>`).join('');
+      const msgsHtml = (item.inAppMessages || []).map(m => `<div class="p-1.5 rounded bg-[var(--bg-card)] border border-[#2B1B10] text-[9.5px]">• ${m}</div>`).join('');
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <span class="px-2 py-0.5 rounded-full bg-rose-600 text-white font-neko font-bold text-[8.5px]">EXPEDIENTE COMPLETO DEL REPORTE</span>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <div class="space-y-2 text-[11px]">
+          <h3 class="font-neko font-bold text-sm">${item.title}</h3>
+          <p class="text-[10px] opacity-85">Referencia: <strong>${item.details}</strong> • Coordenadas: <code>${item.lat}, ${item.lng}</code></p>
+          <div class="space-y-1.5">${photosHtml}</div>
+          <div class="space-y-1"><p class="font-neko font-bold text-[10px]">Bitácora de la Red de Contacto:</p>${msgsHtml || '<p class="text-[9.5px] opacity-75">Sin mensajes aún.</p>'}</div>
+          ${item.status === 'in_transit' ? `<button type="button" onclick="releaseSosBackToRed('${item.id}')" class="w-full neko-btn py-1.5 bg-rose-500 text-white font-bold text-xs">🔴 No pude capturarlo (Devolver a SOS Rojo)</button>` : ''}
+          ${isCreator ? `<button type="button" onclick="deleteOwnPin('${item.id}')" class="w-full neko-btn py-1.5 bg-rose-200 text-rose-950 font-bold text-xs">🗑️ Eliminar mi propio reporte</button>` : ''}
+          <div class="grid grid-cols-3 gap-1.5 pt-1">
+            <button type="button" onclick="closeCenterModal(); jumpFromSosTabToMapPin('${item.id}')" class="neko-btn py-2 bg-[#F97316] text-white font-bold text-[10px]">Ir al Pin ➔</button>
+            <button type="button" onclick="openInAppPinAlertModal('${item.id}')" class="neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-[10px]">Cooperar</button>
+            <button type="button" onclick="openSocialPosterGenerator('REPORTE EN MAPA','${item.title.replace(/'/g, '')}','${item.details.replace(/'/g, '')}','Coord: ${item.lat}, ${item.lng}','Red Cívica MishiMaya','${firstImg}')" class="neko-btn py-2 bg-sky-300 text-[#2B1B10] font-bold text-[10px]">Compartir</button>
+          </div>
+        </div>`);
+    }
+
+    function startDirectMapReportFlow(type) {
+      NekoSFX.tap();
+      pendingReportType = type;
+      closeCenterModal(); closeMapPinCard(); switchMainTab('map', true); initMap();
+      const lat = state.userCoords.lat, lng = state.userCoords.lng;
+      if (dragTempMarker && mapInstance) mapInstance.removeLayer(dragTempMarker);
+      const pinKind = type === 'clinic_new' ? 'clinic' : type;
+      dragTempMarker = L.marker([lat, lng], { draggable: true, zIndexOffset: 9999, icon: createPointedPinIcon(pinKind, 'Arrastra aquí', type === 'clinic_new') }).addTo(mapInstance);
+      mapInstance.flyTo([lat, lng], 16, { duration: 0.4 });
+      const banner = document.getElementById('drag-pin-banner'), cEl = document.getElementById('drag-pin-coords');
+      if (banner) banner.classList.remove('hidden');
+      if (cEl) cEl.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+      dragTempMarker.on('drag', e => { const p = e.target.getLatLng(); if (cEl) cEl.textContent = `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`; });
+      notify('📍 Arrastra el pin al punto exacto del mapa y pulsa "✓ Confirmar".');
+    }
+
+    function cancelDraggedPinPosition() {
+      if (dragTempMarker && mapInstance) mapInstance.removeLayer(dragTempMarker);
+      dragTempMarker = null; document.getElementById('drag-pin-banner').classList.add('hidden');
+      notify('Creación de pin cancelada.');
+    }
+
+    function confirmDraggedPinPosition() {
+      if (!dragTempMarker) return;
+      const p = dragTempMarker.getLatLng();
+      if (mapInstance) mapInstance.removeLayer(dragTempMarker);
+      dragTempMarker = null; document.getElementById('drag-pin-banner').classList.add('hidden');
+      if (pendingReportType === 'clinic_new') {
+        openSuggestClinicModal(Number(p.lat.toFixed(5)), Number(p.lng.toFixed(5)));
+      } else {
+        openCameraReportModal(pendingReportType, Number(p.lat.toFixed(5)), Number(p.lng.toFixed(5)));
+      }
+    }
+
+    function openCameraReportModal(type, customLat, customLng) {
+      pendingReportType = type;
+      const lat = customLat !== undefined ? customLat : state.userCoords.lat;
+      const lng = customLng !== undefined ? customLng : state.userCoords.lng;
+      const nearbyPins = state.streetItems.filter(p => p.type === type && haversineMeters(lat, lng, p.lat, p.lng) <= 130);
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <h3 class="font-neko font-bold text-xs">Nuevo Reporte (${type === 'emergency' ? 'SOS URGENTE' : (type === 'colony' ? 'COLONIA' : 'EN CALLE / PERDIDO')})</h3>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        ${nearbyPins.length ? `<div class="p-2 rounded-xl bg-amber-100 border-2 border-[#2B1B10] text-[10px]"><p class="font-bold">¡Ya existe un reporte en esta misma cuadra!</p><button type="button" onclick="openStreetFolderModal('${nearbyPins[0].id}')" class="w-full neko-btn py-1 mt-1 bg-emerald-400 text-[#2B1B10] font-bold">Añadir Foto al Pin Existente</button></div>` : ''}
+        <form onsubmit="submitCameraReport(event,'${type}',${lat},${lng})" class="space-y-2 text-[11px]">
+          <div class="p-2 neko-subcard flex items-center justify-between">
+            <span class="font-mono font-bold text-[10px]">📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}</span>
+            <button type="button" onclick="startDirectMapReportFlow('${type}')" class="neko-btn px-2.5 py-1 bg-amber-300 text-[#2B1B10] font-bold text-[9.5px]">Ajustar en Mapa</button>
+          </div>
+          <div class="p-2 neko-subcard text-center space-y-1.5">
+            <img id="captured-photo-preview" onclick="openPhotoLightbox(this.src,'Vista previa')" class="${window.lastCapturedDataUrl ? '' : 'hidden'} w-full max-h-48 object-contain rounded-xl border border-emerald-600 mx-auto zoomable-photo" src="${window.lastCapturedDataUrl || ''}" />
+            <label class="w-full neko-btn py-2 bg-sky-400 text-[#2B1B10] font-bold text-xs cursor-pointer">Tomar / Subir Foto Real (WhatsApp SD)<input type="file" accept="image/*" capture="environment" onchange="handleFilePhotoUpload(event)" class="hidden" /></label>
+          </div>
+          ${type !== 'emergency' ? `<select id="rep-safety-type" class="w-full px-2 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-bold text-[10px]"><option value="owned_collar">Bien alimentado / Con collar (Casa Segura - NO retirar)</option><option value="tnr_ear">Muesca en oreja (Gato comunitario TNR - NO retirar)</option><option value="stray_risk">Gato perdido / Desorientado / En peligro vial</option></select>` : ''}
+          <input id="rep-title" type="text" required placeholder="Descripción breve del michi *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#3D2618] bg-[#FFFDF7] text-[#2B1B10]" />
+          <input id="rep-landmark" type="text" required placeholder="Punto de referencia visual (ej. Portón azul) *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#3D2618] bg-[#FFFDF7] text-[#2B1B10]" />
+          <div class="p-2 rounded-xl bg-emerald-100 border border-[#2B1B10] space-y-1 text-[9.5px]">
+            <label class="flex items-start gap-1.5 cursor-pointer font-bold">
+              <input id="rep-optin-wa" type="checkbox" onchange="document.getElementById('rep-wa-num').classList.toggle('hidden', !this.checked)" class="mt-0.5 rounded" />
+              <span>📲 Consentimiento para este caso: Autorizo mostrar mi WhatsApp a los usuarios que abran ESTE pin específico.</span>
+            </label>
+            <input id="rep-wa-num" type="tel" value="${state.session.phone || ''}" placeholder="Tu número WhatsApp (ej. 52999...)" class="hidden w-full px-2 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+          </div>
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn py-2 bg-stone-200 text-[#2B1B10] font-bold text-xs">Cancelar</button>
+            <button type="submit" class="neko-btn py-2 bg-[#F97316] text-white font-bold text-xs">Publicar (+50 EXP)</button>
+          </div>
+        </form>`);
+    }
+
+    function handleFilePhotoUpload(ev, targetPreviewId = 'captured-photo-preview', storeKey = 'lastCapturedDataUrl') {
+      const file = ev.target.files?.[0]; if (!file) return;
+      compressImageWhatsAppSD(file, dataUrl => {
+        window[storeKey] = dataUrl;
+        const prev = document.getElementById(targetPreviewId);
+        if (prev) { prev.src = dataUrl; prev.classList.remove('hidden'); }
+        NekoSFX.celebrate(); notify('Foto real procesada en calidad WhatsApp SD.');
+      });
+    }
+
+    function submitCameraReport(ev, type, lat, lng) {
+      ev.preventDefault();
+      const title = document.getElementById('rep-title').value.trim(), lm = document.getElementById('rep-landmark').value.trim();
+      const allowWa = !!document.getElementById('rep-optin-wa')?.checked;
+      const waNum = (document.getElementById('rep-wa-num')?.value || state.session.phone || '').replace(/\D/g, '');
+      if (waNum) state.session.phone = waNum;
+      const id = 'pin-' + Date.now();
+      state.streetItems.unshift({
+        id, type, title, details: lm, lat, lng, status: 'active', responderName: '', responderSince: 0, lastReminderAt: 0, createdAt: Date.now(),
+        creatorKey: getUserUniqueKey(),
+        paScore: state.session.paWeight || 1, paRequired: type === 'colony' ? 6 : 3,
+        closeFlags: 0, closeFlagVoters: [], lastFlagDate: new Date().toISOString().slice(0, 10),
+        quarantineNotice: false, seenNovelty: false,
+        catSafetyType: document.getElementById('rep-safety-type')?.value || 'stray_risk', ownerClaimed: false, lastConfirmedText: 'Hace un momento',
+        allowPublicWa: allowWa && !!waNum, reporterWa: waNum,
+        inAppMessages: [`Reporte inicial publicado por ${state.session.label}.`],
+        folderPhotos: [{ kind: 'cat', label: 'Foto Principal del Michi', note: title, author: state.session.label, imgData: window.lastCapturedDataUrl || '' }, { kind: 'landmark', label: 'Punto de referencia', note: lm, author: state.session.label, imgData: '' }]
+      });
+      toggleFollowPin(id, true); window.lastCapturedDataUrl = ''; state.karma += 50;
+      syncVolunteerAuthorityFromKarma();
+      closeCenterModal(); switchMainTab('map', true); renderAll(); showPinCardOverlay('street', id);
+      animateKarmaExpBar(); launchNekoCelebration(); notify('Reporte publicado (+50 EXP).');
+    }
+
+    function openStreetFolderModal(pinId) {
+      const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      const isAdmin = state.session.role === 'admin';
+      const photosHtml = (item.folderPhotos || []).map((p, idx) => `<div class="p-2 neko-subcard space-y-1"><div class="flex items-center justify-between"><span class="px-1.5 py-0.5 rounded bg-amber-300 text-[#2B1B10] font-neko font-bold text-[8.5px]">${p.label}</span><div class="flex gap-1"><button type="button" onclick="openReportInappropriateModal('photo','${idx}','Foto en ${item.title.replace(/'/g, '')}',${item.lat},${item.lng},'${item.id}')" class="px-1.5 py-0.5 rounded bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('photo','${idx}','Foto','${item.id}')" class="px-1.5 py-0.5 rounded bg-purple-300 text-[#2B1B10] font-bold text-[8px]">👑</button>` : ''}</div></div>${p.imgData ? `<img src="${p.imgData}" onclick="openPhotoLightbox('${p.imgData}','${p.note.replace(/'/g, '')}')" class="w-full max-h-56 object-contain rounded-lg border border-[#2B1B10] zoomable-photo" />` : ''}<p class="text-[10px] font-semibold">${p.note}</p></div>`).join('');
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <h3 class="font-neko font-bold text-xs">Álbum de la Cuadra: ${item.title}</h3>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <div class="space-y-2 text-[11px]">
+          <div class="space-y-1.5 max-h-56 overflow-y-auto">${photosHtml}</div>
+          <form onsubmit="addPhotoOrLandmarkToExistingPin(event,'${item.id}')" class="p-2 neko-subcard space-y-1.5">
+            <img id="captured-photo-preview" onclick="openPhotoLightbox(this.src,'Vista previa')" class="hidden w-full max-h-40 object-contain rounded border border-emerald-600 mx-auto zoomable-photo" />
+            <div class="grid grid-cols-2 gap-1">
+              <select id="add-ph-kind" class="px-2 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-bold text-[9.5px]"><option value="cat">Nueva Foto del Michi</option><option value="landmark">Punto de Referencia</option></select>
+              <label class="neko-btn py-1 bg-sky-300 text-[#2B1B10] font-bold text-[9.5px] cursor-pointer">Subir Foto<input type="file" accept="image/*" capture="environment" onchange="handleFilePhotoUpload(event)" class="hidden" /></label>
+            </div>
+            <input id="new-lm-note" type="text" required placeholder="Nota *" class="w-full px-2 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] text-[10px]" />
+            <button type="submit" class="w-full neko-btn py-1.5 bg-emerald-400 text-[#2B1B10] font-bold text-[10px]">Guardar en este Pin</button>
+          </form>
+        </div>`);
+    }
+
+    function addPhotoOrLandmarkToExistingPin(ev, pinId) {
+      ev.preventDefault();
+      const item = state.streetItems.find(x => x.id === pinId), note = document.getElementById('new-lm-note').value.trim(), kind = document.getElementById('add-ph-kind').value;
+      if (item && note) {
+        item.folderPhotos.unshift({ kind, label: kind === 'cat' ? 'Avistamiento actualizado' : 'Punto de referencia', note, author: state.session.label, imgData: window.lastCapturedDataUrl || '' });
+        broadcastPinUpdate(item, `Añadió foto: "${note}"`); window.lastCapturedDataUrl = '';
+        awardKarmaWithCooldown('photo_' + pinId, 25, false); renderAll(); openStreetFolderModal(pinId);
+      }
+    }
+
+    function openVolunteerPublishModal(sectionKey, targetType) {
+      window.lastVolCatImg = ''; window.lastVolRecetaImg = '';
+      const isCamp = sectionKey === 'campaigns';
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <h3 class="font-neko font-bold text-xs">${isCamp ? 'Publicar Campaña Médica (Con Receta / Factura)' : 'Publicar Michi en Adopción Responsable (100% Interior)'}</h3>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <form onsubmit="submitVolunteerPublish(event,'${sectionKey}','${targetType}')" class="space-y-2 text-[11px]">
+          <input id="vol-pub-name" type="text" required placeholder="${isCamp ? 'Nombre del michi y tratamiento *' : 'Nombre del michi y edad *'}" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+          <input id="vol-pub-ent" type="text" required placeholder="${isCamp ? 'Clínica donde se atiende / Responsable *' : 'Refugio, Clínica u Hogar Temporal *'}" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+          <input id="vol-pub-desc" type="text" required placeholder="${isCamp ? 'Diagnóstico médico breve *' : 'Estado actual, vacunas y carácter *'}" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+          <div class="grid grid-cols-2 gap-1.5">
+            <input id="vol-pub-wa" type="tel" required placeholder="WhatsApp (52999...) *" class="px-2 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+            ${isCamp ? `<input id="vol-pub-goal" type="number" required min="100" placeholder="Meta MXN *" class="px-2 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-mono" />` : `<input id="vol-pub-before" type="text" required placeholder="Historia Antes del rescate *" class="px-2 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />`}
+          </div>
+          ${isCamp ? `<input id="vol-pub-clabe" type="text" required placeholder="CLABE o cuenta para esta campaña *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-mono" />` : ''}
+          <div class="grid ${isCamp ? 'grid-cols-2' : 'grid-cols-1'} gap-1.5">
+            <label class="neko-btn py-2 bg-sky-300 text-[#2B1B10] font-bold text-[9.5px] cursor-pointer">Foto Real del Michi *<input type="file" accept="image/*" required onchange="handleFilePhotoUpload(event,'vol-cat-prev','lastVolCatImg')" class="hidden" /></label>
+            ${isCamp ? `<label class="neko-btn py-2 bg-amber-300 text-[#2B1B10] font-bold text-[9.5px] cursor-pointer">Foto Receta / Factura *<input type="file" accept="image/*" required onchange="handleFilePhotoUpload(event,'vol-rec-prev','lastVolRecetaImg')" class="hidden" /></label>` : ''}
+          </div>
+          <div class="grid grid-cols-2 gap-1.5"><img id="vol-cat-prev" onclick="openPhotoLightbox(this.src,'Foto del michi')" class="hidden w-full h-20 object-contain rounded border border-[#2B1B10] zoomable-photo" /><img id="vol-rec-prev" onclick="openPhotoLightbox(this.src,'Receta / Factura')" class="hidden w-full h-20 object-contain rounded border border-[#2B1B10] zoomable-photo" /></div>
+          <button type="submit" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">Publicar Ficha Real (+60 EXP)</button>
+        </form>`);
+    }
+
+    function submitVolunteerPublish(ev, sectionKey, targetType) {
+      ev.preventDefault();
+      const name = document.getElementById('vol-pub-name').value.trim(), entName = document.getElementById('vol-pub-ent').value.trim();
+      const desc = document.getElementById('vol-pub-desc').value.trim(), wa = document.getElementById('vol-pub-wa').value.replace(/\D/g, '') || '529991112233';
+      const isVol = targetType === 'volunteer' || state.session.role === 'volunteer';
+      if (sectionKey === 'campaigns') {
+        state.campaigns.unshift({
+          id: 'camp-' + Date.now(), creatorKey: getUserUniqueKey(), origin: isVol ? 'volunteer' : 'entity',
+          targetType: isVol ? 'volunteer' : targetType, entityId: state.session.entityId || 'volunteer',
+          entityName: entName, whatsapp: wa, catName: name, desc,
+          clabe: document.getElementById('vol-pub-clabe').value.trim(),
+          raisedMxn: 0, targetMxn: parseInt(document.getElementById('vol-pub-goal').value, 10) || 1500, pendingMxn: 0,
+          catImg: window.lastVolCatImg || '', recetaImg: window.lastVolRecetaImg || ''
+        });
+      } else {
+        state.adoptions.unshift({
+          id: 'ad-' + Date.now(), creatorKey: getUserUniqueKey(), origin: state.session.role === 'volunteer' ? 'volunteer' : 'entity',
+          name, coat: state.theme, entityId: state.session.entityId || 'volunteer',
+          entityType: state.session.role === 'clinic' ? 'clinic' : 'shelter',
+          entityName: entName, whatsapp: wa, health: 'Protocolo 100% Interior', status: 'available',
+          beforeDesc: document.getElementById('vol-pub-before').value.trim(), afterDesc: desc, photoUrl: window.lastVolCatImg || ''
+        });
+      }
+      state.karma += 60; syncVolunteerAuthorityFromKarma(); closeCenterModal(); renderAll(); animateKarmaExpBar(); launchNekoCelebration();
+      notify('¡Publicación real activa (+60 EXP)!');
+    }
+
+    function viewMedicalReceiptModal(campId) {
+      const c = state.campaigns.find(x => x.id === campId); if (!c) return;
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <h3 class="font-neko font-bold text-xs">Receta / Factura Médica: ${c.catName}</h3>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <div class="space-y-2 text-[11px] text-center">
+          ${c.recetaImg ? `<img src="${c.recetaImg}" onclick="openPhotoLightbox('${c.recetaImg}','Receta Médica: ${c.catName.replace(/'/g, '')}')" class="w-full max-h-80 object-contain rounded-xl border-2 border-[#2B1B10] mx-auto zoomable-photo" />` : `<div class="p-4 neko-subcard font-bold">Respaldo verificado en ${c.entityName}.</div>`}
+        </div>`);
+    }
+
+    /* =========================================================================
+       RENDER RIFUGI E CLINICHE (BARRA REPUTAZIONE IN BASE 1000: PARTENZA 500/1000,
+       BOTTONE "OPINAR" SUI RIFUGI E "IR A ADOPCIÓN" SULLE CLINICHE)
+       ========================================================================= */
+    function renderSheltersTab() {
+      const isAdmin = state.session.role === 'admin';
+      document.getElementById('subview-shelters-list').innerHTML = state.shelters.map(s => {
+        const repPts = s.reputationPts !== undefined ? s.reputationPts : 500;
+        const barPct = Math.max(0, Math.min(100, Math.round((repPts / 1000) * 100)));
+        const cN = state.campaigns.filter(c => c.origin !== 'volunteer' && c.entityId === s.id && c.raisedMxn < c.targetMxn).length;
+        const sN = state.supplies.filter(x => x.origin !== 'volunteer' && x.entityId === s.id && !x.fulfilled).length;
+        const payInfo = s.appMember && s.clabe ? `🏦 CLABE Oficial: <code class="font-mono font-bold">${s.clabe}</code>` : `🔒 Cuenta bancaria: disponible cuando el refugio active su perfil oficial en la app`;
+        return `
+          <div id="entity-card-${s.id}" class="neko-card p-3 space-y-2 text-[11px]">
+            <div class="flex justify-between items-start gap-1.5">
+              <div><h3 class="font-neko font-bold text-[12.5px]">${s.name}</h3><p class="text-[10px] font-bold opacity-80">${s.zone}</p></div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" onclick="openSocialPosterGenerator('REFUGIO EN MÉRIDA','${s.name.replace(/'/g, '')}','${s.zone} • ${s.hours}','Servicios: ${s.services.join(', ')}','Reputación P2P: ${repPts}/1000 pts')" class="neko-btn px-2 py-0.5 bg-sky-300 text-[#2B1B10] font-bold text-[8.5px]">Compartir</button>
+                <button type="button" onclick="openReportInappropriateModal('shelter','${s.id}','${s.name.replace(/'/g, '')}',${s.lat},${s.lng})" class="neko-btn px-1.5 py-0.5 bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
+                ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('shelter','${s.id}','${s.name.replace(/'/g, '')}')" class="neko-btn px-1.5 py-0.5 bg-purple-300 text-[#2B1B10] font-bold text-[8px]">👑</button>` : ''}
+              </div>
+            </div>
+            <div class="p-2 neko-subcard text-[9.5px] space-y-0.5">
+              <p>Horario: ${s.hours} • Coord: ${s.coordinator} • Capacidad: ${s.activeCats}/${s.maxCapacity}</p>
+              <p>Servicios: ${s.services.join(' • ')}</p>
+              <p class="text-[9px] opacity-85">${payInfo}</p>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between items-center text-[9.5px] font-neko font-bold">
+                <span>⭐ Reputación P2P (Base 1000)</span>
+                <span class="${repPts >= 500 ? 'text-emerald-700' : 'text-rose-700'}">${repPts} / 1000 pts (${s.expCount || 0} opiniones)</span>
+              </div>
+              <div class="w-full h-2.5 rounded-full bg-stone-300 border border-[#2B1B10] overflow-hidden"><div class="${repPts >= 500 ? 'bg-emerald-500' : 'bg-amber-500'} h-full neko-prog-fill" style="width:${barPct}%"></div></div>
+            </div>
+            <!-- SOSTITUITO "IR A ADOPCIÓN" CON "⭐ OPINAR" SUI RIFUGI -->
+            <div class="grid grid-cols-3 gap-1.5">
+              <button type="button" onclick="setSubTab('shelters','campaigns')" class="neko-btn py-1.5 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[9px]">Campañas ${cN ? `<span class="action-tag-notif">${cN}</span>` : ''}</button>
+              <button type="button" onclick="setSubTab('shelters','supplies')" class="neko-btn py-1.5 bg-amber-300 text-[#2B1B10] font-bold text-[9px]">Insumos ${sN ? `<span class="action-tag-notif">${sN}</span>` : ''}</button>
+              <button type="button" onclick="openP2PVerifyModal('shelter','${s.id}')" class="neko-btn py-1.5 bg-emerald-300 text-[#2B1B10] font-bold text-[9px]">⭐ Opinar (${s.expCount || 0})</button>
+            </div>
+          </div>`;
+      }).join('');
+      document.getElementById('subview-shelters-campaigns').innerHTML = renderCampaignsList('shelter');
+      document.getElementById('subview-shelters-supplies').innerHTML = renderGroupedSuppliesByEntity('shelter');
+    }
+
+    function renderClinicsTab() {
+      const isClinicOrAdmin = state.session.role === 'clinic' || state.session.role === 'admin';
+      const isAdmin = state.session.role === 'admin';
+      document.getElementById('subview-clinics-triage').innerHTML = state.clinics.map(c => {
+        const isGrey = !c.confirmed;
+        const repPts = c.reputationPts !== undefined ? c.reputationPts : (isGrey ? 0 : 500);
+        const barPct = Math.max(0, Math.min(100, Math.round((repPts / 1000) * 100)));
+        const cN = state.campaigns.filter(x => x.origin !== 'volunteer' && x.entityId === c.id && x.raisedMxn < x.targetMxn).length;
+        const sN = state.supplies.filter(x => x.origin !== 'volunteer' && x.entityId === c.id && !x.fulfilled).length;
+        const payInfo = c.appMember && c.clabe ? `🏦 CLABE Oficial: <code class="font-mono font-bold">${c.clabe}</code>` : `🔒 Cuenta bancaria: disponible cuando la clínica active su perfil oficial en la app`;
+        return `
+          <div id="entity-card-${c.id}" class="neko-card p-3 space-y-2 text-[11px] ${isGrey ? 'border-dashed' : ''}">
+            <div class="flex justify-between items-start gap-1.5">
+              <div>
+                <span class="px-2 py-0.5 rounded-full ${isGrey ? 'bg-stone-300' : 'bg-emerald-200'} text-[#2B1B10] font-neko font-bold text-[8px]">${isGrey ? `⚪ Por confirmar (${c.paScore || 1}/6 PA)` : '🏥 Clínica Verificada en Mérida'}</span>
+                <h3 class="font-neko font-bold text-[12.5px] mt-0.5">${c.name}</h3>
+                <p class="text-[10px] font-bold opacity-80">${c.zone}</p>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" onclick="openSocialPosterGenerator('CLÍNICA FELINA','${c.name.replace(/'/g, '')}','${c.zone} • ${c.hours}','Servicios: ${c.services.join(', ')}','Tel: ${c.phone} • Reputación: ${repPts}/1000')" class="neko-btn px-2 py-0.5 bg-sky-300 text-[#2B1B10] font-bold text-[8.5px]">Compartir</button>
+                <button type="button" onclick="openReportInappropriateModal('clinic','${c.id}','${c.name.replace(/'/g, '')}',${c.lat},${c.lng})" class="neko-btn px-1.5 py-0.5 bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
+                ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('clinic','${c.id}','${c.name.replace(/'/g, '')}')" class="neko-btn px-1.5 py-0.5 bg-purple-300 text-[#2B1B10] font-bold text-[8px]">👑</button>` : ''}
+              </div>
+            </div>
+            <div class="p-2 neko-subcard text-[9.5px] space-y-0.5">
+              <p>Horario: ${c.hours} • Servicios: ${c.services.join(' • ')}</p>
+              <p class="font-mono text-[9px]">Tel: ${c.phone} • ${c.coupon}</p>
+              <p class="text-[9px] opacity-85">${payInfo}</p>
+            </div>
+            <div class="space-y-1">
+              <div class="flex justify-between items-center text-[9.5px] font-neko font-bold">
+                <span>⭐ Reputación P2P (Base 1000)</span>
+                <span class="${repPts >= 500 ? 'text-emerald-700' : 'text-rose-700'}">${repPts} / 1000 pts (${c.expCount || 0} opiniones)</span>
+              </div>
+              <div class="w-full h-2.5 rounded-full bg-stone-300 border border-[#2B1B10] overflow-hidden"><div class="${repPts >= 500 ? 'bg-emerald-500' : 'bg-amber-500'} h-full neko-prog-fill" style="width:${barPct}%"></div></div>
+            </div>
+            <!-- AGGIUNTO IL TASTO "IR A ADOPCIÓN" SULLE CLINICHE ACCANTO A CAMPAGNE, INSUMOS E OPINAR -->
+            ${isGrey ? `<div class="grid grid-cols-${isClinicOrAdmin ? '2' : '1'} gap-1.5"><button type="button" onclick="openP2PVerifyModal('clinic','${c.id}')" class="neko-btn py-1.5 bg-amber-400 text-[#2B1B10] font-bold text-[9.5px]">Confirmar Clínica <span class="action-tag-notif">1</span></button>${isClinicOrAdmin ? `<button type="button" onclick="claimGreyClinicOfficial('${c.id}')" class="neko-btn py-1.5 bg-emerald-400 text-[#2B1B10] font-bold text-[9.5px]">Vincular Clínica</button>` : ''}</div>` : `
+            <div class="grid grid-cols-4 gap-1">
+              <button type="button" onclick="setSubTab('clinics','campaigns')" class="neko-btn py-1.5 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[8.5px]">Campañas ${cN ? `<span class="action-tag-notif">${cN}</span>` : ''}</button>
+              <button type="button" onclick="setSubTab('clinics','supplies')" class="neko-btn py-1.5 bg-amber-300 text-[#2B1B10] font-bold text-[8.5px]">Insumos ${sN ? `<span class="action-tag-notif">${sN}</span>` : ''}</button>
+              <button type="button" onclick="switchMainTab('adopt'); setAdoptSectionFilter('clinic')" class="neko-btn py-1.5 bg-sky-300 text-[#2B1B10] font-bold text-[8.5px]">Adopción ➔</button>
+              <button type="button" onclick="openP2PVerifyModal('clinic','${c.id}')" class="neko-btn py-1.5 bg-emerald-300 text-[#2B1B10] font-bold text-[8.5px]">⭐ Opinar</button>
+            </div>`}
+          </div>`;
+      }).join('');
+      document.getElementById('subview-clinics-campaigns').innerHTML = renderCampaignsList('clinic');
+      document.getElementById('subview-clinics-supplies').innerHTML = renderGroupedSuppliesByEntity('clinic');
+    }
+
+    function renderCampaignsList(targetType) {
+      const canConfirm = state.session.role === targetType || state.session.role === 'admin';
+      const isAdmin = state.session.role === 'admin';
+      const list = state.campaigns.filter(c => c.origin !== 'volunteer' && c.targetType === targetType);
+      const topBtn = canConfirm ? `<button type="button" onclick="openVolunteerPublishModal('campaigns','${targetType}')" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">+ Crear Campaña Institucional de ${targetType === 'clinic' ? 'Clínica' : 'Refugio'}</button>` : `<div class="p-2 rounded-xl bg-amber-100 border border-[#2B1B10] text-[9.5px] font-bold text-center">💡 Las campañas de voluntarios independientes se encuentran en la sección 🚨 SOS ➔ Voluntarios</div>`;
+      if (!list.length) return topBtn + `<div class="neko-card p-4 text-center text-[11px] opacity-85">Aún no hay campañas institucionales activas en esta sección.</div>`;
+      return topBtn + list.map(c => {
+        const pct = Math.min(100, Math.round((c.raisedMxn / c.targetMxn) * 100)), paused = c.raisedMxn >= c.targetMxn;
+        return `
+          <div class="neko-card p-3 space-y-1.5 text-[11px] ${!paused ? 'campaign-beacon-pulse' : ''}">
+            <div class="flex justify-between items-start">
+              <div><h4 class="font-neko font-bold text-xs">${c.catName}</h4><p class="text-[9.5px] font-bold opacity-75">${c.entityName}</p></div>
+              <div class="flex gap-1">
+                ${c.recetaImg ? `<button type="button" onclick="viewMedicalReceiptModal('${c.id}')" class="neko-btn px-2 py-0.5 bg-amber-200 text-[#2B1B10] font-bold text-[8.5px]">Ver Receta</button>` : ''}
+                <button type="button" onclick="openSocialPosterGenerator('CAMPAÑA MÉDICA','${c.catName.replace(/'/g, '')}','${c.desc.replace(/'/g, '')}','Meta: $${c.raisedMxn}/$${c.targetMxn} MXN','CLABE: ${c.clabe}','${c.catImg || ''}')" class="neko-btn px-2 py-0.5 bg-sky-300 text-[#2B1B10] font-bold text-[8.5px]">Compartir</button>
+                <button type="button" onclick="openReportInappropriateModal('campaign','${c.id}','${c.catName.replace(/'/g, '')}')" class="neko-btn px-1.5 py-0.5 bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
+                ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('campaign','${c.id}','${c.catName.replace(/'/g, '')}')" class="neko-btn px-1.5 py-0.5 bg-purple-300 text-[#2B1B10] font-bold text-[8px]">👑</button>` : ''}
+              </div>
+            </div>
+            ${c.catImg ? `<img src="${c.catImg}" onclick="openPhotoLightbox('${c.catImg}','${c.catName.replace(/'/g, '')}')" class="w-full max-h-44 object-contain rounded-lg border border-[#2B1B10] zoomable-photo" />` : ''}
+            <p class="text-[10px]">${c.desc}</p>
+            <div class="w-full h-2 rounded-full bg-stone-300 border border-[#2B1B10] overflow-hidden"><div class="bg-emerald-500 h-full" style="width:${pct}%"></div></div>
+            ${c.pendingMxn > 0 ? `<div class="p-1.5 rounded bg-amber-100 border border-[#2B1B10] flex justify-between items-center text-[9.5px]"><span>+$${c.pendingMxn} MXN por confirmar</span>${canConfirm ? `<button type="button" onclick="confirmCampaignSpeiByEntity('${c.id}')" class="neko-btn px-2 py-0.5 bg-emerald-400 text-[#2B1B10] font-bold">Confirmar</button>` : ''}</div>` : ''}
+            ${paused ? `<div class="py-1.5 rounded-xl bg-amber-300 text-center font-neko font-bold text-[10px]">¡Meta 100% Alcanzada!</div>` : `<div class="grid grid-cols-2 gap-1.5"><button type="button" onclick="openDonationHubModal('${c.id}')" class="neko-btn py-1.5 bg-emerald-400 text-[#2B1B10] font-bold text-[9.5px]">Notificar Donación SPEI <span class="action-tag-notif">1</span></button><a href="https://wa.me/${c.whatsapp}" target="_blank" rel="noopener noreferrer" class="neko-btn py-1.5 bg-amber-300 text-[#2B1B10] font-bold text-[9.5px]">WhatsApp</a></div>`}
+          </div>`;
+      }).join('');
+    }
+
+    function renderGroupedSuppliesByEntity(targetType) {
+      const canAdd = state.session.role === targetType || state.session.role === 'admin';
+      const addBtn = canAdd ? `<button type="button" onclick="openAddSupplyModal('${targetType}')" class="w-full neko-btn py-2 bg-amber-300 text-[#2B1B10] font-bold text-xs">+ Añadir Insumo Institucional</button>` : '';
+      const activeSups = state.supplies.filter(s => s.origin !== 'volunteer' && s.targetType === targetType && !s.fulfilled);
+      if (!activeSups.length) return addBtn + `<div class="neko-card p-4 text-center text-[11px] opacity-85">No hay listas de insumos institucionales pendientes en este momento.</div>`;
+      return addBtn + activeSups.map(s => `
+        <div class="neko-card p-2.5 space-y-1.5 text-[11px]">
+          <div class="flex items-center justify-between gap-2">
+            <div><p class="font-neko font-bold text-xs">${s.title} (${s.entityName}) <span class="action-tag-notif">1</span></p><p class="text-[9.5px] opacity-80">${s.sub}</p></div>
+            <div class="flex items-center gap-1">
+              <button type="button" onclick="notifySupplyPurchaseToEntity('${s.id}')" class="neko-btn px-2.5 py-1.5 bg-amber-400 text-[#2B1B10] font-bold text-[9.5px] shrink-0">${s.pendingConfirm ? 'Notificado' : 'Comprar'}</button>
+              <button type="button" onclick="openReportInappropriateModal('supply','${s.id}','${s.title.replace(/'/g, '')}')" class="neko-btn px-1.5 py-1 bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
+            </div>
+          </div>
+          ${s.pendingConfirm && canAdd ? `<button type="button" onclick="confirmSupplyReceivedByEntity('${s.id}')" class="w-full neko-btn py-1 bg-emerald-400 text-[#2B1B10] font-bold text-[9px]">✓ Confirmar Recepción y Retirar de Lista</button>` : ''}
+        </div>`).join('');
+    }
+
+    function openAddSupplyModal(targetType) {
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <h3 class="font-neko font-bold text-xs">Publicar Insumo Necesario</h3>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <form onsubmit="submitNewSupply(event,'${targetType}')" class="space-y-2 text-[11px]">
+          <input id="sup-new-title" type="text" required placeholder="Producto (ej. Saco Croquetas 10kg) *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+          <input id="sup-new-sub" type="text" required placeholder="Detalle y precio estimado *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+          <button type="submit" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">Publicar en Lista</button>
+        </form>`);
+    }
+
+    function submitNewSupply(ev, targetType) {
+      ev.preventDefault();
+      const isVol = targetType === 'volunteer' || state.session.role === 'volunteer';
+      state.supplies.unshift({ id: 'sup-' + Date.now(), origin: isVol ? 'volunteer' : 'entity', targetType: isVol ? 'volunteer' : targetType, entityId: state.session.entityId || 'afad', entityName: state.session.label, storeName: 'Amazon MX', title: document.getElementById('sup-new-title').value.trim(), sub: document.getElementById('sup-new-sub').value.trim(), url: 'https://www.amazon.com.mx/s?k=alimento+gato', fulfilled: false, pendingConfirm: false });
+      closeCenterModal(); renderAll(); notify('Insumo publicado.');
+    }
+
+    function notifySupplyPurchaseToEntity(id) {
+      const s = state.supplies.find(x => x.id === id); if (!s) return;
+      window.open(s.url, '_blank', 'noopener'); s.pendingConfirm = true; renderAll();
+    }
+
+    function confirmSupplyReceivedByEntity(id) {
+      const s = state.supplies.find(x => x.id === id); if (!s) return;
+      s.fulfilled = true; s.pendingConfirm = false; state.karma += 60;
+      syncVolunteerAuthorityFromKarma();
+      renderAll(); animateKarmaExpBar(); launchNekoCelebration();
+      notify('Recepción de insumo confirmada (+60 EXP).');
+    }
+
+    function confirmCampaignSpeiByEntity(campId) {
+      const c = state.campaigns.find(x => x.id === campId); if (!c || !c.pendingMxn) return;
+      c.raisedMxn = Math.min(c.targetMxn, c.raisedMxn + c.pendingMxn); c.pendingMxn = 0; state.karma += 100;
+      syncVolunteerAuthorityFromKarma();
+      renderAll(); animateKarmaExpBar(); launchNekoCelebration();
+    }
+
+    function openEntityDetailModal(kind, id, tab = 'campaigns', fromMapPin = false) {
+      const ent = (kind === 'clinic' ? state.clinics : state.shelters).find(x => x.id === id); if (!ent) return;
+      const repPts = ent.reputationPts !== undefined ? ent.reputationPts : 500;
+      openCenterModal(`
+        <div class="flex justify-between items-start border-b pb-1.5">
+          <div><h3 class="font-neko font-bold text-xs">${ent.name}</h3><p class="text-[9.5px] opacity-80">${ent.zone} • ${ent.hours}</p></div>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <div class="p-2.5 neko-subcard text-[10px] space-y-1">
+          <p><strong>Servicios:</strong> ${ent.services.join(' • ')}</p>
+          <p><strong>Reputación P2P en App:</strong> ⭐ ${repPts} / 1000 pts (${ent.expCount || 0} opiniones)</p>
+          <p><strong>Medio de pago:</strong> ${ent.appMember && ent.clabe ? ent.clabe : 'Lo añadirá la entidad al registrarse en la app'}</p>
+        </div>
+        ${fromMapPin ? `<button type="button" onclick="NekoSFX.tap(); closeCenterModal(); jumpToEntityCard('${kind}','${ent.id}')" class="w-full neko-btn py-2 bg-[#F97316] text-white font-bold text-xs">Ir a la Ficha en la Sección Dedicada ➔</button>` : ''}`);
+    }
+
+    function openDonationHubModal(campId) {
+      const c = state.campaigns.find(x => x.id === campId); if (!c) return;
+      const rem = Math.max(50, c.targetMxn - c.raisedMxn);
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <h3 class="font-neko font-bold text-xs">Notificar Donación SPEI a ${c.catName}</h3>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <form onsubmit="submitSpeiDonation(event,'${c.id}')" class="space-y-2 text-[11px]">
+          <div class="p-2 neko-subcard text-[10px] flex justify-between items-center"><span>Cuenta / CLABE: <strong class="font-mono">${c.clabe}</strong></span><button type="button" onclick="navigator.clipboard?.writeText('${c.clabe}'); notify('Copiada.')" class="neko-btn px-2 py-0.5 bg-amber-300 text-[#2B1B10] font-bold text-[9px]">Copiar</button></div>
+          <p class="text-[9px] opacity-80">⚖️ Cláusula No-Custodial: MishiMaya no toca ni retiene fondos. Tu transferencia va directa al beneficiario.</p>
+          <input id="spei-amt" type="number" required min="10" max="${rem}" value="${Math.min(250, rem)}" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#3D2618] bg-[#FFFDF7] text-[#2B1B10] font-mono font-bold" />
+          <button type="submit" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">Notificar Transferencia</button>
+        </form>`);
+    }
+
+    function submitSpeiDonation(ev, campId) {
+      ev.preventDefault();
+      const c = state.campaigns.find(x => x.id === campId), amt = parseInt(document.getElementById('spei-amt').value, 10) || 200;
+      if (c) c.pendingMxn = (c.pendingMxn || 0) + amt;
+      closeCenterModal(); renderAll(); notify(`Aviso de +$${amt} MXN enviado.`);
+    }
+
+    /* =========================================================================
+       OPINAR Y CONFIRMAR (CLÍNICAS, REFUGIOS Y PINES EN BASE 1000 CON VOTO + / -
+       RESERVADO A VOLUNTARIOS Y MULTIPLICADO POR SU AUTORIDAD PA)
+       ========================================================================= */
+    function openP2PVerifyModal(targetKind, id) {
+      const isEntity = targetKind === 'clinic' || targetKind === 'shelter';
+      const item = targetKind === 'clinic' ? state.clinics.find(c => c.id === id) : (targetKind === 'shelter' ? state.shelters.find(s => s.id === id) : state.streetItems.find(i => i.id === id));
+      if (!item) return;
+
+      if (isEntity && state.session.role !== 'volunteer' && state.session.role !== 'admin') {
+        NekoSFX.alreadyActive();
+        openCenterModal(`
+          <div class="flex justify-between items-center border-b pb-1.5">
+            <h3 class="font-neko font-bold text-xs">⭐ Opiniones Reservadas a Voluntarios</h3>
+            <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+          </div>
+          <p class="text-[11px] leading-relaxed">Para garantizar total imparcialidad entre clínicas y refugios, <strong>únicamente las cuentas de Voluntarios</strong> pueden emitir opiniones positivas o negativas sobre las entidades.</p>`);
+        return;
+      }
+
+      const isCreator = !isEntity && item.creatorKey && item.creatorKey === getUserUniqueKey();
+      const volPa = computeVolunteerPAFromKarma(state.karma);
+
+      if (isEntity) {
+        const repPts = item.reputationPts !== undefined ? item.reputationPts : (item.confirmed === false ? 0 : 500);
+        openCenterModal(`
+          <div class="flex justify-between items-center border-b pb-1.5">
+            <h3 class="font-neko font-bold text-xs">⭐ Opinar sobre ${targetKind === 'clinic' ? 'Clínica' : 'Refugio'}: ${item.name}</h3>
+            <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+          </div>
+          <form onsubmit="submitP2PVerification(event,'${targetKind}','${id}')" class="space-y-2 text-[11px]">
+            <div class="p-2 rounded-xl bg-amber-100 border border-[#2B1B10] flex items-center justify-between text-[9.5px]">
+              <span>Reputación actual: <strong>${repPts} / 1000 pts</strong></span>
+              <span class="font-bold text-emerald-900">Tu multiplicador: ×${volPa} PA</span>
+            </div>
+            <div class="p-2.5 neko-subcard space-y-1.5">
+              <p class="font-neko font-bold text-[10px]">1. Sentido de tu opinión ciudadana:</p>
+              <label class="flex items-center gap-1.5 cursor-pointer font-bold text-emerald-800">
+                <input type="radio" name="ent_vote_dir" value="pos" checked onchange="document.getElementById('neg-reason-box').classList.add('hidden');document.getElementById('pos-criteria-box').classList.remove('hidden')" />
+                <span>👍 Opinión Positiva (+${12 * volPa} a +${16 * volPa} pts)</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer font-bold text-rose-800">
+                <input type="radio" name="ent_vote_dir" value="neg" onchange="document.getElementById('neg-reason-box').classList.remove('hidden');document.getElementById('pos-criteria-box').classList.add('hidden')" />
+                <span>👎 Opinión Negativa / Alerta (−${14 * volPa} pts)</span>
+              </label>
+            </div>
+            <div id="pos-criteria-box" class="p-2.5 neko-subcard space-y-1 text-[10px]">
+              <p class="font-neko font-bold">Aspectos destacados que confirmas:</p>
+              <label class="flex items-center gap-1.5"><input type="checkbox" name="pos_c1" checked /> <span>Trato ético, paciente y seguro hacia los gatos</span></label>
+              <label class="flex items-center gap-1.5"><input type="checkbox" name="pos_c2" checked /> <span>Buenas instalaciones, higiene y protocolos</span></label>
+              <label class="flex items-center gap-1.5"><input type="checkbox" name="pos_c3" /> <span>Transparencia y apoyo real a rescatistas</span></label>
+            </div>
+            <div id="neg-reason-box" class="hidden p-2.5 rounded-xl bg-rose-100 border border-rose-700 space-y-1 text-[10px]">
+              <p class="font-neko font-bold text-rose-950">Motivo de la opinión negativa:</p>
+              <select id="neg-reason-sel" class="w-full px-2 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-bold">
+                <option value="Mal manejo o falta de empatía con el michi">Mal manejo o falta de empatía con el michi</option>
+                <option value="Falta de higiene o instalaciones inadecuadas">Falta de higiene o instalaciones inadecuadas</option>
+                <option value="Cobros indebidos o falta de transparencia">Cobros indebidos o falta de transparencia</option>
+              </select>
+            </div>
+            <button type="submit" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">Registrar Opinión Ponderada (×${volPa} PA)</button>
+          </form>`);
+        return;
+      }
+
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <h3 class="font-neko font-bold text-xs">Confirmación y Protección del Pin: ${item.title}</h3>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <form onsubmit="submitP2PVerification(event,'street','${id}')" class="space-y-2 text-[11px]">
+          <div class="p-2.5 neko-subcard space-y-1.5">
+            <label class="flex items-center gap-1.5"><input type="checkbox" required /> <span>1. ¿Confirmas que la ubicación en Mérida es exacta?</span></label>
+            <label class="flex items-center gap-1.5"><input type="checkbox" required /> <span>2. ¿Confirmas que el michi sigue en este punto hoy?</span></label>
+          </div>
+          <button type="button" onclick="openConfirmOwnedCatModal('${id}')" class="w-full neko-btn py-2 bg-amber-300 text-[#2B1B10] font-bold text-[10px]">🙋‍♂️ Yo soy el dueño / Conozco al dueño en esta cuadra</button>
+          ${isCreator ? `<button type="button" onclick="deleteOwnPin('${id}')" class="w-full neko-btn py-1.5 bg-rose-500 text-white font-bold text-[10px]">🗑️ Soy el autor: Eliminar mi propio pin ahora</button>` : ''}
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="submit" class="neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-[10px]">Confirmar Presencia</button>
+            <button type="button" onclick="flagPinForSafeRemoval('${id}')" class="neko-btn py-2 bg-rose-200 text-rose-900 font-bold text-[10px]">Ya no está (${item.closeFlags || 0}/3 hoy)</button>
+          </div>
+        </form>`);
+    }
+
+    function openConfirmOwnedCatModal(pinId) {
+      const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      NekoSFX.shield();
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <span class="px-2 py-0.5 rounded-full bg-amber-300 text-[#2B1B10] font-neko font-bold text-[8.5px]">🛡️ PROTOCOLO CASA SEGURA</span>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <div class="space-y-2.5 text-[11px]">
+          <h3 class="font-neko font-bold text-xs">¿Qué sucede al activar "Yo soy el dueño / Conozco al dueño"?</h3>
+          <div class="p-2.5 rounded-xl bg-amber-100 border-2 border-[#2B1B10] space-y-1.5 text-[10px]">
+            <p>1. <strong>Bloqueo inmediato anti-sustracción:</strong> El pin cambia a estado <strong>🏠 Casa Segura</strong> con una alerta que prohíbe llevarse al gato de su cuadra.</p>
+            <p>2. <strong>Aviso a toda la red del pin:</strong> Todos los voluntarios reciben notificación de que el michi tiene familia en esa calle.</p>
+          </div>
+          <input id="owner-note-inp" type="text" placeholder="Nota opcional (ej. Vive en la casa #42)" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+          <div class="grid grid-cols-2 gap-1.5">
+            <button type="button" onclick="NekoSFX.tap(); openP2PVerifyModal('street','${item.id}')" class="neko-btn py-2 bg-stone-200 text-[#2B1B10] font-bold text-xs">‹ Volver</button>
+            <button type="button" onclick="confirmOwnedCatInStreet('${item.id}')" class="neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">🛡️ Activar Protección</button>
+          </div>
+        </div>`);
+    }
+
+    function confirmOwnedCatInStreet(pinId) {
+      const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      const extraNote = (document.getElementById('owner-note-inp')?.value || '').trim();
+      NekoSFX.shield();
+      item.ownerClaimed = true; item.catSafetyType = 'owned_collar';
+      broadcastPinUpdate(item, `Activó protección Casa Segura: este michi tiene dueño en la cuadra.${extraNote ? ' (' + extraNote + ')' : ''} ¡No retirar!`);
+      closeCenterModal(); showPinCardOverlay('street', pinId, true); renderAll();
+      notify('🛡️ Protección Casa Segura activada: retiro de la cuadra bloqueado.');
+    }
+
+    function deleteOwnPin(pinId) {
+      const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      NekoSFX.tap();
+      state.streetItems = state.streetItems.filter(x => x.id !== pinId);
+      closeCenterModal(); closeMapPinCard(); renderAll();
+      notify('🗑️ Tu reporte fue eliminado del mapa correctamente.');
+    }
+
+    function flagPinForSafeRemoval(pinId) {
+      checkMidnightCloseFlagsReset();
+      const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      const uKey = getUserUniqueKey();
+      item.closeFlagVoters = item.closeFlagVoters || [];
+      item.lastFlagDate = new Date().toISOString().slice(0, 10);
+
+      if (item.closeFlagVoters.includes(uKey)) {
+        NekoSFX.alreadyActive();
+        notify('⚠️ Ya registraste tu voto hoy para este pin. Se requieren 3 usuarios distintos antes de medianoche.');
+        return;
+      }
+
+      item.closeFlagVoters.push(uKey);
+      item.closeFlags = item.closeFlagVoters.length;
+
+      if (item.closeFlags >= 3) {
+        state.streetItems = state.streetItems.filter(x => x.id !== pinId);
+        closeCenterModal(); closeMapPinCard(); renderAll();
+        notify('Pin retirado tras 3 confirmaciones comunitarias distintas hoy.');
+      } else {
+        item.quarantineNotice = true;
+        broadcastPinUpdate(item, `Indicó que el michi ya no está (${item.closeFlags}/3 confirmaciones hoy; se reinicia a medianoche).`);
+        closeCenterModal(); showPinCardOverlay('street', pinId, true); renderAll();
+        notify(`Reporte registrado (${item.closeFlags}/3 hoy). Se reinicia a la medianoche.`);
+      }
+    }
+
+    function submitP2PVerification(ev, targetKind, id) {
+      ev.preventDefault();
+      const volPa = computeVolunteerPAFromKarma(state.karma);
+      const nowTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      if (targetKind === 'clinic' || targetKind === 'shelter') {
+        const list = targetKind === 'clinic' ? state.clinics : state.shelters;
+        const ent = list.find(x => x.id === id);
+        if (!ent) return;
+        const voteDir = ev.target.querySelector('input[name="ent_vote_dir"]:checked')?.value || 'pos';
+        const c1 = !!ev.target.pos_c1?.checked, c2 = !!ev.target.pos_c2?.checked, c3 = !!ev.target.pos_c3?.checked;
+        const posCount = Math.max(1, (c1 ? 1 : 0) + (c2 ? 1 : 0) + (c3 ? 1 : 0));
+        const basePts = voteDir === 'pos' ? (8 + posCount * 2) : 14;
+        const delta = (voteDir === 'pos' ? 1 : -1) * basePts * volPa;
+
+        const gotExp = awardKarmaWithCooldown(`opinar_${targetKind}_${id}`, 35, true);
+        if (gotExp) {
+          ent.expCount = (ent.expCount || 0) + 1;
+          if (targetKind === 'clinic' && !ent.confirmed) {
+            ent.paScore = (ent.paScore || 1) + volPa;
+            if (ent.paScore >= 6) {
+              ent.confirmed = true;
+              ent.reputationPts = Math.max(0, Math.min(1000, 500 + delta));
+            }
+          } else {
+            const curRep = ent.reputationPts !== undefined ? ent.reputationPts : 500;
+            ent.reputationPts = Math.max(0, Math.min(1000, curRep + delta));
+          }
+          closeCenterModal(); closeMapPinCard(); renderAll();
+          if (voteDir === 'pos') launchNekoCelebration();
+          notify(`⭐ Opinión registrada (${delta >= 0 ? '+' : ''}${delta} pts en base 1000 • Multiplicador ×${volPa} PA).`);
+        } else {
+          NekoSFX.alreadyActive();
+          closeCenterModal();
+          notify('Ya registraste tu opinión ponderada para esta entidad anteriormente.');
+        }
+      } else {
+        const st = state.streetItems.find(i => i.id === id);
+        awardKarmaWithCooldown('verify_pin_' + id, 35, false);
+        if (st) { st.paScore = (st.paScore || 1) + volPa; st.lastConfirmedText = nowTime; broadcastPinUpdate(st, `Confirmó presencia (${nowTime}).`); }
+        closeCenterModal(); showPinCardOverlay('street', id, true); renderAll(); notify(`Presencia actualizada (${nowTime}).`);
+      }
+    }
+
+    function openInAppPinAlertModal(pinId) {
+      const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
+      const following = isPinFollowed(item.id);
+      const historyHtml = (item.inAppMessages || []).map(m => `<div class="p-1.5 rounded bg-[var(--bg-card)] border border-[#2B1B10] text-[9.5px]">• ${m}</div>`).join('');
+      openCenterModal(`
+        <div class="flex justify-between items-center border-b pb-1.5">
+          <h3 class="font-neko font-bold text-xs">Cooperar con este Pin: ${item.title}</h3>
+          <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+        </div>
+        <div class="space-y-2 text-[11px]">
+          <div class="p-2 rounded-xl bg-amber-100 border border-[#2B1B10] flex items-center justify-between text-[9.5px]">
+            <span>Recibir notificaciones automáticas de este pin:</span>
+            <button type="button" onclick="toggleFollowPin('${item.id}'); openInAppPinAlertModal('${item.id}')" class="neko-btn px-2.5 py-1 ${following ? 'bg-emerald-400' : 'bg-stone-300'} text-[#2B1B10] font-bold">${following ? 'Conectado ✓' : 'Conectar'}</button>
+          </div>
+          ${historyHtml ? `<div class="space-y-1 max-h-28 overflow-y-auto p-1.5 neko-subcard">${historyHtml}</div>` : ''}
+          <form onsubmit="submitInAppPinAlert(event,'${item.id}')" class="space-y-2">
+            <textarea id="inapp-msg" rows="2" required class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] text-[10.5px]">¡Estoy en camino para apoyar con este reporte!</textarea>
+            <div class="p-2 rounded-xl bg-emerald-100 border border-[#2B1B10] space-y-1 text-[9.5px]">
+              <label class="flex items-start gap-1.5 cursor-pointer font-bold">
+                <input id="helper-optin-wa" type="checkbox" onchange="document.getElementById('helper-wa-num').classList.toggle('hidden', !this.checked)" class="mt-0.5 rounded" />
+                <span>📲 Autorizo mostrar mi número de WhatsApp al creador de este pin y a los voluntarios de este caso específico.</span>
+              </label>
+              <input id="helper-wa-num" type="tel" value="${state.session.phone || ''}" placeholder="Tu WhatsApp (ej. 52999...)" class="hidden w-full px-2 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+            </div>
+            <button type="submit" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">Enviar Aviso a la Red del Pin</button>
+          </form>
+        </div>`);
+    }
+
+    function submitInAppPinAlert(ev, pinId) {
+      ev.preventDefault();
+      const item = state.streetItems.find(x => x.id === pinId);
+      let txt = document.getElementById('inapp-msg').value.trim();
+      const shareWa = !!document.getElementById('helper-optin-wa')?.checked;
+      const waNum = (document.getElementById('helper-wa-num')?.value || state.session.phone || '').replace(/\D/g, '');
+      if (shareWa && waNum) {
+        state.session.phone = waNum;
+        txt += ` (WhatsApp autorizado para este caso: +${waNum})`;
+      }
+      if (item && txt) { broadcastPinUpdate(item, txt); awardKarmaWithCooldown('alert_' + pinId, 25, false); closeCenterModal(); renderAll(); notify('Aviso enviado a la red del pin.'); }
+    }
+
+
     function openAppFreeDonationModal() {
       toggleRightDrawer(false);
       openCenterModal(`
@@ -2775,3 +3989,4 @@
   </script>
 </body>
 </html>
+```
