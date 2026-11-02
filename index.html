@@ -3253,5 +3253,305 @@
       }
     });
   </script>
+    <!-- =========================================================================
+       PATCH v21.1: INTRO FISICA NEKO ATSUME + GATE DI LOGIN INVALICABILE FULLSCREEN
+       Incolla questo blocco subito prima di </body> alla fine di index.html
+       ========================================================================= -->
+  <style>
+    #neko-auth-gate-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      max-width: 480px;
+      margin: 0 auto;
+      background-color: #FDF6E2;
+      background-image:
+        radial-gradient(rgba(200, 125, 75, 0.15) 2px, transparent 2px),
+        radial-gradient(rgba(249, 115, 22, 0.08) 1.5px, transparent 1.5px);
+      background-size: 22px 22px, 44px 44px;
+      background-position: 0 0, 11px 11px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-y: auto;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    #neko-auth-gate-screen.gate-unlocked {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(1.03);
+    }
+
+    /* Palco Centrale con Linea del Terreno */
+    #neko-intro-stage {
+      width: 100%;
+      max-width: 410px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), margin 0.55s ease;
+    }
+
+    .neko-letters-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 1.5px;
+      height: 76px;
+      padding: 0 6px;
+      overflow: visible;
+    }
+
+    /* Singola Lettera Stile Neko Atsume con Fisica di Rimbalzo e Squash-Stretch */
+    .neko-phys-letter {
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 40px;
+      line-height: 0.88;
+      display: inline-block;
+      position: relative;
+      transform-origin: bottom center;
+      color: var(--l-fill, #F97316);
+      -webkit-text-stroke: 2.5px #2B1B10;
+      text-shadow: 0 3.5px 0 #2B1B10;
+      opacity: 0;
+      animation: nekoGravityBounce 0.78s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      animation-delay: var(--l-delay, 0s);
+      user-select: none;
+    }
+
+    /* Orecchiette da gatto sopra le due lettere M */
+    .neko-phys-letter.has-cat-ears::before,
+    .neko-phys-letter.has-cat-ears::after {
+      content: '';
+      position: absolute;
+      top: -8px;
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-bottom: 10px solid #2B1B10;
+      z-index: -1;
+    }
+    .neko-phys-letter.has-cat-ears::before { left: 2px; transform: rotate(-14deg); }
+    .neko-phys-letter.has-cat-ears::after  { right: 2px; transform: rotate(14deg); }
+
+    @keyframes nekoGravityBounce {
+      0% {
+        opacity: 0;
+        transform: translateY(-230px) rotate(var(--l-rot, -14deg)) scale(0.88, 1.15);
+      }
+      12% {
+        opacity: 1;
+      }
+      /* 1° Impatto sul terreno: schiacciamento elastico (Squash) */
+      52% {
+        opacity: 1;
+        transform: translateY(0px) rotate(0deg) scale(1.24, 0.74);
+      }
+      /* 1° Rimbalzo verso l'alto (Stretch) */
+      70% {
+        opacity: 1;
+        transform: translateY(-34px) rotate(var(--l-rot2, 6deg)) scale(0.93, 1.08);
+      }
+      /* 2° Impatto sul terreno */
+      84% {
+        opacity: 1;
+        transform: translateY(0px) rotate(0deg) scale(1.10, 0.90);
+      }
+      /* Micro-rimbalzo di assestamento */
+      93% {
+        opacity: 1;
+        transform: translateY(-7px) rotate(0deg) scale(0.98, 1.02);
+      }
+      /* Posizione finale accomodata sulla linea */
+      100% {
+        opacity: 1;
+        transform: translateY(0px) rotate(0deg) scale(1, 1);
+      }
+    }
+
+    /* Linea del Terreno Simulata */
+    .neko-ground-line-wrap {
+      width: 92%;
+      max-width: 340px;
+      display: flex;
+       flex-direction: column;
+      align-items: center;
+      margin-top: -1px;
+    }
+    .neko-ground-line {
+      width: 100%;
+      height: 7px;
+      background: linear-gradient(90deg, #8C4A23 0%, #C87D4B 50%, #8C4A23 100%);
+      border: 2.5px solid #2B1B10;
+      border-radius: 999px;
+      box-shadow: 0 3px 0 rgba(43, 27, 16, 0.35);
+      position: relative;
+    }
+
+    /* Sottotitolo "Señala, Rescata, Adopta!" che appare dopo la caduta */
+    #neko-intro-motto {
+      margin-top: 10px;
+      padding: 4px 16px;
+      border-radius: 999px;
+      background: #FDE68A;
+      border: 2.2px solid #2B1B10;
+      box-shadow: 0 2.5px 0 #2B1B10;
+      color: #3D2618;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.3px;
+      opacity: 0;
+      transform: translateY(10px) scale(0.9);
+      transition: opacity 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #neko-intro-motto.motto-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Contenitore Full-Screen Registrazione/Login (Non Skippabile) */
+    #neko-gate-form-host {
+      width: 100%;
+      max-width: 420px;
+      margin-top: 14px;
+      display: none;
+    }
+    #neko-gate-form-host.gate-form-visible {
+      display: block;
+      animation: nekoModalPop 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+  </style>
+
+  <!-- OVERLAY A TUTTO SCHERMO: INTRO + GATE DI REGISTRAZIONE/LOGIN -->
+  <div id="neko-auth-gate-screen">
+    <div id="neko-intro-stage">
+      <div class="neko-letters-row" id="neko-falling-letters-box">
+        <span class="neko-phys-letter has-cat-ears" style="--l-fill:#F97316; --l-delay:0.05s; --l-rot:-16deg; --l-rot2:7deg;">M</span>
+        <span class="neko-phys-letter" style="--l-fill:#FFFDF7; --l-delay:0.16s; --l-rot:12deg; --l-rot2:-5deg;">i</span>
+        <span class="neko-phys-letter" style="--l-fill:#FBBF24; --l-delay:0.27s; --l-rot:-10deg; --l-rot2:4deg;">s</span>
+        <span class="neko-phys-letter" style="--l-fill:#EA580C; --l-delay:0.38s; --l-rot:14deg; --l-rot2:-6deg;">h</span>
+        <span class="neko-phys-letter" style="--l-fill:#FFFDF7; --l-delay:0.49s; --l-rot:-8deg; --l-rot2:5deg;">i</span>
+        <span class="neko-phys-letter has-cat-ears" style="--l-fill:#F97316; --l-delay:0.60s; --l-rot:15deg; --l-rot2:-7deg;">M</span>
+        <span class="neko-phys-letter" style="--l-fill:#FDE68A; --l-delay:0.71s; --l-rot:-12deg; --l-rot2:5deg;">a</span>
+        <span class="neko-phys-letter" style="--l-fill:#38BDF8; --l-delay:0.82s; --l-rot:10deg; --l-rot2:-4deg;">y</span>
+        <span class="neko-phys-letter" style="--l-fill:#34D399; --l-delay:0.93s; --l-rot:-14deg; --l-rot2:6deg;">a</span>
+      </div>
+      <div class="neko-ground-line-wrap">
+        <div class="neko-ground-line"></div>
+        <div id="neko-intro-motto">🐾 ¡Señala, Rescata, Adopta!</div>
+      </div>
+    </div>
+
+    <!-- QUI VIENE MONTATO IL MODULO DI LOGIN / REGISTRAZIONE SENZA TASTO CHIUDI -->
+    <div id="neko-gate-form-host" class="neko-card p-3.5 space-y-2.5 shadow-2xl"></div>
+  </div>
+
+  <script>
+    (function initNekoIntroAndUnbreakableGate() {
+      // Blocca qualsiasi tentativo di chiudere il modale centrale se l'utente non è registrato
+      const origCloseCenterModal = window.closeCenterModal;
+      window.closeCenterModal = function() {
+        if (!state.registered) {
+          NekoSFX.alreadyActive();
+          notify('🔒 Identifícate o completa el registro para entrar a MishiMaya.');
+          return;
+        }
+        if (origCloseCenterModal) origCloseCenterModal();
+      };
+
+      // Intercetta openAuthAndOnboardingModal: se l'utente non è ancora registrato,
+      // renderizza il form direttamente dentro lo schermo intero invalicabile (rimuovendo la ✕)
+      const origOpenAuthModal = window.openAuthAndOnboardingModal;
+      window.openAuthAndOnboardingModal = function(selectedRole = 'volunteer') {
+        if (origOpenAuthModal) origOpenAuthModal(selectedRole);
+        if (!state.registered) {
+          const modalContent = document.getElementById('center-modal-content');
+          const modalBackdrop = document.getElementById('center-modal-backdrop');
+          const gateHost = document.getElementById('neko-gate-form-host');
+          if (modalContent && gateHost) {
+            gateHost.innerHTML = modalContent.innerHTML;
+            // Rimuove il pulsante ✕ in alto a destra per renderlo 100% non-skippabile
+            const closeBtns = gateHost.querySelectorAll('button');
+            closeBtns.forEach(b => {
+              if (b.textContent.trim() === '✕') b.remove();
+            });
+            modalBackdrop.classList.add('hidden');
+            gateHost.classList.add('gate-form-visible');
+          }
+        }
+      };
+
+      // Quando completeOnboardingQuiz termina con successo e imposta state.registered = true,
+      // sblocca automaticamente la schermata di benvenuto a tutto schermo
+      const origCompleteQuiz = window.completeOnboardingQuiz;
+      window.completeOnboardingQuiz = function(ev, role) {
+        if (origCompleteQuiz) origCompleteQuiz(ev, role);
+        if (state.registered) {
+          const gateScreen = document.getElementById('neko-auth-gate-screen');
+          if (gateScreen) {
+            gateScreen.classList.add('gate-unlocked');
+            setTimeout(() => gateScreen.classList.add('hidden'), 480);
+          }
+        }
+      };
+
+      // Funzione di Logout per testare il blocco invalicabile in qualsiasi momento dal Drawer
+      window.logoutAndLockGate = function() {
+        state.registered = false;
+        saveState();
+        toggleRightDrawer(false);
+        const gateScreen = document.getElementById('neko-auth-gate-screen');
+        if (gateScreen) {
+          gateScreen.classList.remove('hidden', 'gate-unlocked');
+        }
+        window.openAuthAndOnboardingModal('volunteer');
+        notify('🔒 Sesión cerrada. Pantalla de acceso activada.');
+      };
+
+      window.addEventListener('DOMContentLoaded', () => {
+        // Aggiunge il pulsante "Cerrar Sesión" in fondo al Drawer destro
+        const drawerPanel = document.getElementById('right-drawer-panel');
+        if (drawerPanel && !document.getElementById('btn-drawer-logout')) {
+          const logoutBtn = document.createElement('button');
+          logoutBtn.id = 'btn-drawer-logout';
+          logoutBtn.type = 'button';
+          logoutBtn.className = 'w-full neko-btn py-2 bg-rose-200 text-rose-950 font-bold text-xs mt-1';
+          logoutBtn.textContent = '🚪 Cerrar Sesión (Probar Bloqueo e Intro)';
+          logoutBtn.onclick = window.logoutAndLockGate;
+          drawerPanel.appendChild(logoutBtn);
+        }
+
+        // Nasconde l'eventuale modale prematuro durante i primi 1.8 secondi dell'animazione fisica
+        const modalBackdrop = document.getElementById('center-modal-backdrop');
+        if (modalBackdrop && !state.registered) modalBackdrop.classList.add('hidden');
+
+        // 1. Dopo la caduta dell'ultima lettera (1.75s), mostra il motto "Señala, Rescata, Adopta!"
+        setTimeout(() => {
+          const motto = document.getElementById('neko-intro-motto');
+          if (motto) motto.classList.add('motto-visible');
+        }, 1720);
+
+        // 2. Dopo 2.75s: se l'utente è già registrato entra subito in app (login mantenuto aperto);
+        //    altrimenti mostra il modulo di registrazione/login a tutto schermo non-skippabile
+        setTimeout(() => {
+          const gateScreen = document.getElementById('neko-auth-gate-screen');
+          if (state.registered) {
+            if (gateScreen) {
+              gateScreen.classList.add('gate-unlocked');
+              setTimeout(() => gateScreen.classList.add('hidden'), 480);
+            }
+          } else {
+            window.openAuthAndOnboardingModal('volunteer');
+          }
+        }, 2750);
+      });
+    })();
+  </script>
+  
 </body>
 </html>
