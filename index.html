@@ -6,13 +6,15 @@
   <meta name="theme-color" content="#8C4A23" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>MishiMaya Mérida — v20.0</title>
+  <title>MishiMaya Mérida — v21.0 Production</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <!-- SDK Ufficiali Firebase per Auth, Firestore Multi-Collezione e Cloud Storage Bucket -->
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Quicksand:wght@600;700&display=swap" rel="stylesheet">
   <style>
     :root, [data-theme="calico"] {
@@ -183,7 +185,7 @@
 </head>
 <body>
   <div id="apk-shell" data-theme="calico">
-    <!-- TOP BAR COMPATTA (h-[40px]) -->
+    <!-- TOP BAR COMPATTA (h-[40px]) CON LIVELLO 1-100 E PA DISACCOPPIATI -->
     <header class="neko-wood-top px-2.5 gap-1.5 z-30 shrink-0">
       <div id="top-exp-box" onclick="NekoSFX.tap(); openKarmaExpInfoModal()" class="flex-1 h-[40px] bg-[var(--bg-card)] border-2 border-[#2B1B10] rounded-xl px-2 flex flex-col justify-center shadow-[0_2px_0_#2B1B10] cursor-pointer min-w-0">
         <div class="flex items-center justify-between text-[9.5px] font-neko font-bold text-[var(--text-main)] leading-none">
@@ -267,7 +269,7 @@
                 <span id="ico-ctrl-bell"></span>
                 <span id="gps-notif-count" class="text-[8px] font-bold leading-none">0</span>
               </button>
-              <button type="button" id="btn-map-gps" onclick="NekoSFX.tap(); centerOnUserGPS(true)" class="neko-btn w-9 h-9 rounded-full bg-emerald-400 text-[#2B1B10] flex-col gap-0.5" title="Mi ubicación GPS en tiempo real">
+              <button type="button" id="btn-map-gps" onclick="NekoSFX.tap(); centerOnUserGPS(true)" class="neko-btn w-9 h-9 rounded-full bg-emerald-400 text-[#2B1B10] flex-col gap-0.5" title="Mi ubicación GPS y radio fijo de alertas (3 km)">
                 <span id="ico-ctrl-gps"></span>
                 <span class="text-[6.5px] font-bold leading-none">GPS</span>
               </button>
@@ -292,7 +294,7 @@
 
             <div id="map-pin-card" class="hidden absolute bottom-20 left-2.5 right-2.5 z-[490] neko-card p-3 shadow-2xl neko-pop-anim"></div>
 
-            <!-- ZAMPETTA DI GATTO REALISTICA: IL TOCCO CHIUDE AUTOMATICAMENTE LE SCHEDE IN PRIMO PIANO -->
+            <!-- ZAMPETTA DI GATTO REALISTICA -->
             <div class="absolute bottom-2.5 left-0 right-0 z-[450] flex justify-center pointer-events-none">
               <div id="fan-report-menu" class="fan-menu-wrap">
                 <button type="button" onclick="toggleFanReportMenu(false, true); startDirectMapReportFlow('emergency')" class="neko-btn neko-paw-toe fan-toe-1 bg-rose-500 text-white">
@@ -391,7 +393,7 @@
       </div>
     </nav>
 
-    <!-- DRAWER LATERALE DESTRO -->
+    <!-- DRAWER LATERALE DESTRO CON PREFERENZE NOTIFICHE A RAGGIO FISSO -->
     <div id="right-drawer-backdrop" onclick="if(event.target===this) toggleRightDrawer(false)" class="hidden fixed inset-0 bg-black/70 z-[650] flex justify-end">
       <div id="right-drawer-panel" class="w-[84%] max-w-[340px] h-full neko-card rounded-none rounded-l-2xl p-3.5 overflow-y-auto space-y-2.5 shadow-2xl border-r-0 neko-pop-anim">
         <div class="flex items-center justify-between border-b-2 border-[var(--outline)]/20 pb-2">
@@ -399,7 +401,7 @@
           <button type="button" onclick="NekoSFX.tap(); toggleRightDrawer(false)" class="neko-btn px-2.5 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
         </div>
         <div id="firebase-status-pill" class="p-2 rounded-xl bg-amber-100 border border-[#2B1B10] text-[#2B1B10] text-[9.5px] font-bold">
-          Modo Local Activo (Pega FIREBASE_CONFIG para sincronizar con Google Cloud)
+          Modo Híbrido (Conecta FIREBASE_CONFIG para activar Firestore Multi-Colección + Storage)
         </div>
         <div class="p-2.5 neko-subcard space-y-1.5">
           <p class="font-neko font-bold text-[10.5px]">Memoria Comunitaria (Con Filtros y Orden por Fecha):</p>
@@ -409,8 +411,23 @@
           </div>
         </div>
         <button type="button" onclick="toggleRightDrawer(false); startSpotlightTour(0)" class="w-full neko-btn py-2 bg-amber-300 text-[#2B1B10] font-bold text-xs gap-1.5"><span id="ico-drw-tour"></span><span>Manifiesto Cívico y Tour Guiado (13 Etapas)</span></button>
-        <button type="button" onclick="toggleRightDrawer(false); openAuthAndOnboardingModal('volunteer')" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs gap-1.5"><span id="ico-drw-key"></span><span>Registro / Iniciar Sesión (18+)</span></button>
-        <button type="button" onclick="toggleRightDrawer(false); openLegalPrivacyModal()" class="w-full neko-btn py-2 bg-sky-200 text-[#2B1B10] font-bold text-xs gap-1.5"><span>⚖️ Aviso Legal, Privacidad LFPDPPP y ARCO</span></button>
+        <button type="button" onclick="toggleRightDrawer(false); openAuthAndOnboardingModal('volunteer')" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs gap-1.5"><span id="ico-drw-key"></span><span>Registro / Test de Conocimiento Felino</span></button>
+        <!-- PANNELLO PREFERENZE NOTIFICHE (RAGGIO FISSO 3KM + TOGGLE CATEGORIE) -->
+        <div class="p-2.5 neko-subcard space-y-1.5 text-[10px]">
+          <p class="font-neko font-bold text-[10.5px]">🔔 Preferencias de Notificaciones Push:</p>
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span>🚑 SOS en radio fijo (3 km de mi GPS)</span>
+            <input type="checkbox" id="notif-pref-sos" checked onchange="toggleNotifPref('sosRadius', this.checked)" class="rounded" />
+          </label>
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span>📌 Actualizaciones de Pines que sigo</span>
+            <input type="checkbox" id="notif-pref-followed" checked onchange="toggleNotifPref('followedPins', this.checked)" class="rounded" />
+          </label>
+          <label class="flex items-center justify-between gap-2 cursor-pointer">
+            <span>📢 Alertas generales y nuevas campañas</span>
+            <input type="checkbox" id="notif-pref-broadcast" checked onchange="toggleNotifPref('cityBroadcast', this.checked)" class="rounded" />
+          </label>
+        </div>
         <div class="p-2.5 neko-subcard space-y-1.5">
           <div class="flex items-center justify-between">
             <span class="font-neko font-bold text-[10.5px]">Volumen de Sonidos SFX: <span id="sfx-vol-label">80%</span></span>
@@ -427,13 +444,14 @@
             <button type="button" onclick="applyTheme('void')" class="neko-btn py-1.5 bg-[#242636] text-[#FDE68A] font-bold">Void (Noche Estelar)</button>
           </div>
         </div>
+        <button type="button" onclick="toggleRightDrawer(false); openLegalPrivacyModal()" class="w-full neko-btn py-2 bg-sky-200 text-[#2B1B10] font-bold text-xs gap-1.5"><span>⚖️ Aviso Legal, Privacidad LFPDPPP y ARCO</span></button>
         <div id="demo-role-switcher-box" class="p-2.5 neko-subcard space-y-1.5">
-          <p class="font-neko font-bold text-[10.5px]">Simulador de Rol (Modo Demo):</p>
+          <p class="font-neko font-bold text-[10.5px]">Simulador de Rol (Solo sin Firebase):</p>
           <div class="grid grid-cols-2 gap-1.5 text-[10px]">
-            <button type="button" onclick="setRolePin('volunteer')" class="neko-btn py-1.5 bg-[var(--bg-card)] text-[var(--text-main)] font-bold">Voluntario (Auto PA)</button>
-            <button type="button" onclick="setRolePin('1111')" class="neko-btn py-1.5 bg-emerald-300 text-[#2B1B10] font-bold">Clínica (6 PA Max)</button>
-            <button type="button" onclick="setRolePin('4444')" class="neko-btn py-1.5 bg-amber-300 text-[#2B1B10] font-bold">Refugio (6 PA Max)</button>
-            <button type="button" onclick="setRolePin('9999')" class="neko-btn py-1.5 bg-purple-300 text-[#2B1B10] font-bold">Admin Master (10 PA)</button>
+            <button type="button" onclick="setRolePin('volunteer')" class="neko-btn py-1.5 bg-[var(--bg-card)] text-[var(--text-main)] font-bold">Voluntario (1-5 PA)</button>
+            <button type="button" onclick="setRolePin('1111')" class="neko-btn py-1.5 bg-emerald-300 text-[#2B1B10] font-bold">Clínica (10 PA)</button>
+            <button type="button" onclick="setRolePin('4444')" class="neko-btn py-1.5 bg-amber-300 text-[#2B1B10] font-bold">Refugio (10 PA)</button>
+            <button type="button" onclick="setRolePin('9999')" class="neko-btn py-1.5 bg-purple-300 text-[#2B1B10] font-bold">Admin (50 PA)</button>
           </div>
         </div>
         <button type="button" onclick="openAppFreeDonationModal()" class="w-full neko-btn py-2.5 bg-[#F97316] text-white font-bold text-xs gap-1.5"><span id="ico-drw-heart"></span><span>Donación Libre a la App (Mercado Pago • SPEI)</span></button>
@@ -475,34 +493,42 @@
     };
 
     const ADMIN_MASTER_EMAILS = ["admin@mishimaya.mx"];
-    const STORAGE_KEY = 'mishimaya_apk_v200_clean';
+    const STORAGE_KEY = 'mishimaya_apk_v210_prod';
 
     /* =========================================================================
-       FORMULA MATEMATICA DELL'AUTORITÀ (PA) DAL KARMA (EXP) PER I VOLONTARI
-       PA_vol(K) = min(5, 1 + floor(sqrt(K / 250)))
-       Cliniche e Rifugi confermati/partner = 6 PA (Max Istituzionale) | Admin = 10 PA
+       LIVELLI VOLONTARIO (1 - 100) DISACCOPPIATI DALL'AUTORITÀ P2P (MAX 5 PA)
+       Cliniche e Rifugi Confermati = 10 PA (Sempre superiori ai volontari) | Admin = 50 PA
        ========================================================================= */
-    function computeVolunteerPAFromKarma(karmaExp) {
+    function computeVolunteerLevelFromKarma(karmaExp) {
       const k = Math.max(0, Number(karmaExp) || 0);
-      return Math.min(5, 1 + Math.floor(Math.sqrt(k / 250)));
+      return Math.min(100, 1 + Math.floor(k / 150));
     }
 
-    function getVolunteerRankTitle(pa) {
-      const titles = {
-        1: 'Nivel 1 • Guardián Inicial (1 PA)',
-        2: 'Nivel 2 • Voluntario Activo (2 PA)',
-        3: 'Nivel 3 • Rescatista TNR (3 PA)',
-        4: 'Nivel 4 • Veterano Alta Autoridad (4 PA)',
-        5: 'Nivel 5 • Maestro Cívico Felino (5 PA)'
+    function computeVolunteerPAFromKarma(karmaExp) {
+      const lvl = computeVolunteerLevelFromKarma(karmaExp);
+      const quizFloor = (window.state && window.state.session && window.state.session.quizMinPa) || 1;
+      const calcPa = Math.min(5, 1 + Math.floor((lvl - 1) / 20));
+      return Math.min(5, Math.max(quizFloor, calcPa));
+    }
+
+    function getVolunteerRankTitle(karmaExp) {
+      const lvl = computeVolunteerLevelFromKarma(karmaExp);
+      const pa = computeVolunteerPAFromKarma(karmaExp);
+      const ranks = {
+        1: 'Guardián Inicial',
+        2: 'Voluntario Activo',
+        3: 'Rescatista TNR',
+        4: 'Veterano Felino',
+        5: 'Maestro Cívico'
       };
-      return titles[pa] || titles[1];
+      return `Nv.${lvl} • ${ranks[pa] || 'Voluntario'} (${pa} PA)`;
     }
 
     const ROLE_PINS = {
-      'volunteer': { role: 'volunteer', entityId: '', entityName: 'Voluntario Mérida', paWeight: 3, label: 'Nivel 3 • Rescatista TNR (3 PA)' },
-      '1111': { role: 'clinic', entityId: 'amicagatos', entityName: 'Amica Gatos', paWeight: 6, label: 'Clínica Amica Gatos (6 PA Máx)' },
-      '4444': { role: 'shelter', entityId: 'afad', entityName: 'Albergue AFAD Mérida', paWeight: 6, label: 'Albergue AFAD Mérida (6 PA Máx)' },
-      '9999': { role: 'admin', entityId: 'admin', entityName: 'Moderador Mérida', paWeight: 10, label: 'Administrador General (10 PA)' }
+      'volunteer': { role: 'volunteer', entityId: '', entityName: 'Voluntario Mérida', paWeight: 3, label: 'Nv.10 • Rescatista TNR (3 PA)' },
+      '1111': { role: 'clinic', entityId: 'amicagatos', entityName: 'Amica Gatos', paWeight: 10, label: 'Clínica Amica Gatos (10 PA)' },
+      '4444': { role: 'shelter', entityId: 'afad', entityName: 'Albergue AFAD Mérida', paWeight: 10, label: 'Albergue AFAD Mérida (10 PA)' },
+      '9999': { role: 'admin', entityId: 'admin', entityName: 'Moderador Mérida', paWeight: 50, label: 'Administrador General (50 PA)' }
     };
 
     const NekoSFX = {
@@ -638,18 +664,18 @@
       }
     };
 
-    /* =========================================================================
-       STATO INIZIALE PULITO (REPUTAZIONE P2P PURA SU BASE 1000: PARTENZA 500/1000)
-       ========================================================================= */
     function getDefaultState() {
       return {
         theme: 'calico', sfxEnabled: true, sfxVolume: 80, karma: 1450, mainTab: 'map', mapPinFilter: 'all', registered: false, tutorialSeen: false,
         subTabs: { shelters: 'list', clinics: 'triage', sos: 'emergency' },
         adoptFilter: 'all',
+        notifPrefs: { sosRadius: true, followedPins: true, cityBroadcast: true },
         karmaAwardedLogs: {},
         followedPins: [],
         moderationReports: {},
-        session: { role: 'volunteer', entityId: '', entityName: 'Voluntario Mérida', paWeight: 3, label: 'Nivel 3 • Rescatista TNR (3 PA)', email: 'voluntario@mishimaya.mx', phone: '', age: 25 },
+        userStrikes24h: {},
+        shadowbannedUsers: {},
+        session: { role: 'volunteer', entityId: '', entityName: 'Voluntario Mérida', paWeight: 3, quizMinPa: 1, label: 'Nv.10 • Rescatista TNR (3 PA)', email: 'voluntario@mishimaya.mx', phone: '', age: 25 },
         userCoords: { lat: 20.9865, lng: -89.6165, accuracy: 8 },
         inAppAlerts: [],
         streetItems: [],
@@ -658,16 +684,16 @@
         adoptions: [],
         outcomes: [],
         clinics: [
-          { id: 'amicagatos', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'Amica Gatos (100% Exclusiva Felinos)', zone: 'Av. Fidel Velázquez 66-1, Chichén Itzá', phone: '+529991491108', whatsapp: '529991491108', hours: 'Lun–Vie 09:00–13:00', services: ['Exclusiva Gatos', 'Medicina Interna', 'Cirugía Cat-Friendly'], clabe: '', lat: 20.9782, lng: -89.5835, status: 'open', coupon: 'Especialistas en Medicina Felina' },
-          { id: 'petit', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'Petit - Especialistas en Gatos', zone: 'Av. Mérida 2000 #558, Residencial Pensiones', phone: '+529995863132', whatsapp: '529995863132', hours: 'Lun–Vie 09:00–22:00 • Sáb 09:00–19:00', services: ['Exclusiva Felinos', 'Hospitalización', 'Ecografía y Rayos X'], clabe: '', lat: 20.9924, lng: -89.6642, status: 'open', coupon: 'Atención Exclusiva para Gatos' },
-          { id: 'dragatitos', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'Clínica Veterinaria Dra. Gatitos', zone: 'Calle 7 #62 x 4 y 6, Felipe Carrillo Puerto', phone: '+529999564613', whatsapp: '529999564613', hours: 'Lun–Sáb 08:00–20:00 • Dom 09:00–18:00', services: ['Medicina Felina', 'Profilaxis', 'Esterilización'], clabe: '', lat: 20.9958, lng: -89.6012, status: 'open', coupon: 'Trato Cat-Friendly' },
-          { id: 'pecgato', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'Pecgato Veterinaria y Spa', zone: 'Calle 25 #707A, Jardines de Mérida', phone: '+529991464101', whatsapp: '529991464101', hours: 'Lun–Sáb 10:00–19:30', services: ['Consulta Felina', 'Vacunación', 'Estética sin Estrés'], clabe: '', lat: 21.0082, lng: -89.5865, status: 'open', coupon: 'Manejo Felino Especializado' },
-          { id: 'petsafe', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'Pet Safe Mérida', zone: 'Calle 25 #456, Jardines de Mérida', phone: '+529994349463', whatsapp: '529994349463', hours: 'Lun–Vie 09:00–18:00 • Sáb 09:00–14:00', services: ['Clínica Cat-Friendly', 'Diagnóstico', 'Cirugía'], clabe: '', lat: 21.0068, lng: -89.5892, status: 'open', coupon: 'Consultorio Libre de Estrés' },
-          { id: 'veterinum', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'VETERINUM Hospital Veterinario 24 Horas', zone: 'Av. 59 N° 1040, Fracc. Las Américas', phone: '+529993901356', whatsapp: '529993901356', hours: 'Abierto 24 Horas (Urgencias 24/7)', services: ['Urgencias 24/7', 'Oxigenoterapia', 'Ortopedia y Rayos X'], clabe: '', lat: 21.0665, lng: -89.6495, status: 'open', coupon: 'Triage de Urgencias 24 Horas' },
-          { id: 'zoohabitat', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'Zoohabitat Hospital Veterinario 24 Horas', zone: 'Av. Universidad Pedagógica #213, Vergel 65', phone: '+529992714342', whatsapp: '529992714342', hours: 'Abierto 24 Horas (Urgencias 24/7)', services: ['Urgencias 24/7', 'Hospitalización', 'Laboratorio Clínico'], clabe: '', lat: 20.9585, lng: -89.5742, status: 'open', coupon: 'Atención de Emergencias 24/7' },
-          { id: 'wau24h', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'Wau Hospital Veterinario 24 Horas', zone: 'Calle 47-A x 106 #897, Las Américas 2', phone: '+529995185299', whatsapp: '529995185299', hours: 'Abierto 24 Horas (Urgencias 24/7)', services: ['Urgencias 24/7', 'Cuidados Intensivos', 'Cirugía'], clabe: '', lat: 21.0745, lng: -89.6562, status: 'open', coupon: 'Guardia Médica 24 Horas' },
-          { id: 'montejo', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'Hospital Veterinario Montejo', zone: 'Calle 50 #382 x 53-F y 55, Francisco de Montejo', phone: '+529991951407', whatsapp: '529991951407', hours: 'Lun–Dom 08:00–21:00', services: ['Hospitalización', 'Ultrasonido', 'Traumatología'], clabe: '', lat: 21.0285, lng: -89.6425, status: 'open', coupon: 'Diagnóstico por Imagen' },
-          { id: 'modulomunicipal', confirmed: true, appMember: false, seenNovelty: true, paScore: 6, expCount: 0, reputationPts: 500, name: 'Módulo Veterinario Municipal Chichén Itzá', zone: 'Calle 18 #93-99, Col. Chichén Itzá (Ayuntamiento)', phone: '+529991681751', whatsapp: '529991681751', hours: 'Lun–Sáb 08:00–15:00', services: ['Esterilización Bajo Costo', 'Vacuna Antirrábica Gratuita', 'Consulta Municipal'], clabe: '', lat: 20.9765, lng: -89.5890, status: 'open', coupon: 'Tarifa Social Ayuntamiento de Mérida' }
+          { id: 'amicagatos', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'Amica Gatos (100% Exclusiva Felinos)', zone: 'Av. Fidel Velázquez 66-1, Chichén Itzá', phone: '+529991491108', whatsapp: '529991491108', hours: 'Lun–Vie 09:00–13:00', services: ['Exclusiva Gatos', 'Medicina Interna', 'Cirugía Cat-Friendly'], clabe: '', lat: 20.9782, lng: -89.5835, status: 'open', coupon: 'Especialistas en Medicina Felina' },
+          { id: 'petit', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'Petit - Especialistas en Gatos', zone: 'Av. Mérida 2000 #558, Residencial Pensiones', phone: '+529995863132', whatsapp: '529995863132', hours: 'Lun–Vie 09:00–22:00 • Sáb 09:00–19:00', services: ['Exclusiva Felinos', 'Hospitalización', 'Ecografía y Rayos X'], clabe: '', lat: 20.9924, lng: -89.6642, status: 'open', coupon: 'Atención Exclusiva para Gatos' },
+          { id: 'dragatitos', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'Clínica Veterinaria Dra. Gatitos', zone: 'Calle 7 #62 x 4 y 6, Felipe Carrillo Puerto', phone: '+529999564613', whatsapp: '529999564613', hours: 'Lun–Sáb 08:00–20:00 • Dom 09:00–18:00', services: ['Medicina Felina', 'Profilaxis', 'Esterilización'], clabe: '', lat: 20.9958, lng: -89.6012, status: 'open', coupon: 'Trato Cat-Friendly' },
+          { id: 'pecgato', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'Pecgato Veterinaria y Spa', zone: 'Calle 25 #707A, Jardines de Mérida', phone: '+529991464101', whatsapp: '529991464101', hours: 'Lun–Sáb 10:00–19:30', services: ['Consulta Felina', 'Vacunación', 'Estética sin Estrés'], clabe: '', lat: 21.0082, lng: -89.5865, status: 'open', coupon: 'Manejo Felino Especializado' },
+          { id: 'petsafe', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'Pet Safe Mérida', zone: 'Calle 25 #456, Jardines de Mérida', phone: '+529994349463', whatsapp: '529994349463', hours: 'Lun–Vie 09:00–18:00 • Sáb 09:00–14:00', services: ['Clínica Cat-Friendly', 'Diagnóstico', 'Cirugía'], clabe: '', lat: 21.0068, lng: -89.5892, status: 'open', coupon: 'Consultorio Libre de Estrés' },
+          { id: 'veterinum', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'VETERINUM Hospital Veterinario 24 Horas', zone: 'Av. 59 N° 1040, Fracc. Las Américas', phone: '+529993901356', whatsapp: '529993901356', hours: 'Abierto 24 Horas (Urgencias 24/7)', services: ['Urgencias 24/7', 'Oxigenoterapia', 'Ortopedia y Rayos X'], clabe: '', lat: 21.0665, lng: -89.6495, status: 'open', coupon: 'Triage de Urgencias 24 Horas' },
+          { id: 'zoohabitat', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'Zoohabitat Hospital Veterinario 24 Horas', zone: 'Av. Universidad Pedagógica #213, Vergel 65', phone: '+529992714342', whatsapp: '529992714342', hours: 'Abierto 24 Horas (Urgencias 24/7)', services: ['Urgencias 24/7', 'Hospitalización', 'Laboratorio Clínico'], clabe: '', lat: 20.9585, lng: -89.5742, status: 'open', coupon: 'Atención de Emergencias 24/7' },
+          { id: 'wau24h', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'Wau Hospital Veterinario 24 Horas', zone: 'Calle 47-A x 106 #897, Las Américas 2', phone: '+529995185299', whatsapp: '529995185299', hours: 'Abierto 24 Horas (Urgencias 24/7)', services: ['Urgencias 24/7', 'Cuidados Intensivos', 'Cirugía'], clabe: '', lat: 21.0745, lng: -89.6562, status: 'open', coupon: 'Guardia Médica 24 Horas' },
+          { id: 'montejo', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'Hospital Veterinario Montejo', zone: 'Calle 50 #382 x 53-F y 55, Francisco de Montejo', phone: '+529991951407', whatsapp: '529991951407', hours: 'Lun–Dom 08:00–21:00', services: ['Hospitalización', 'Ultrasonido', 'Traumatología'], clabe: '', lat: 21.0285, lng: -89.6425, status: 'open', coupon: 'Diagnóstico por Imagen' },
+          { id: 'modulomunicipal', confirmed: true, appMember: false, seenNovelty: true, paScore: 10, expCount: 0, reputationPts: 500, name: 'Módulo Veterinario Municipal Chichén Itzá', zone: 'Calle 18 #93-99, Col. Chichén Itzá (Ayuntamiento)', phone: '+529991681751', whatsapp: '529991681751', hours: 'Lun–Sáb 08:00–15:00', services: ['Esterilización Bajo Costo', 'Vacuna Antirrábica Gratuita', 'Consulta Municipal'], clabe: '', lat: 20.9765, lng: -89.5890, status: 'open', coupon: 'Tarifa Social Ayuntamiento de Mérida' }
         ],
         shelters: [
           { id: 'afad', confirmed: true, appMember: false, expCount: 0, reputationPts: 500, name: 'Albergue Franciscano del Animal Desprotegido A.C. (AFAD)', zone: 'Carretera a Santa Rita Cholul, Mérida', whatsapp: '529999476319', hours: 'Lun–Sáb 10:00–16:00', coordinator: 'Mesa Directiva AFAD', services: ['Resguardo y Rehabilitación', 'Campañas de Esterilización', 'Adopción Responsable'], clabe: '', lat: 21.0385, lng: -89.5580, activeCats: 30, maxCapacity: 48 },
@@ -681,7 +707,7 @@
   <script>
     let state = loadState(), mapInstance = null, markersLayer = null;
     let dragTempMarker = null, pendingReportType = 'emergency', currentSpotlightStep = -1, activeTourTarget = null;
-    let fbApp = null, fbAuth = null, fbDb = null;
+    let fbApp = null, fbAuth = null, fbDb = null, fbStorage = null;
 
     function loadState() {
       try {
@@ -691,25 +717,31 @@
           const def = getDefaultState();
           return Object.assign(def, parsed, {
             subTabs: Object.assign(def.subTabs, parsed.subTabs || {}),
+            notifPrefs: Object.assign(def.notifPrefs, parsed.notifPrefs || {}),
             karmaAwardedLogs: parsed.karmaAwardedLogs || {},
             followedPins: parsed.followedPins || [],
-            moderationReports: parsed.moderationReports || {}
+            moderationReports: parsed.moderationReports || {},
+            userStrikes24h: parsed.userStrikes24h || {},
+            shadowbannedUsers: parsed.shadowbannedUsers || {}
           });
         }
       } catch (e) {}
       return getDefaultState();
     }
 
+    /* =========================================================================
+       SINCRONIZZAZIONE LIVELLO (1-100) E AUTORITÀ (VOLONTARI MAX 5 PA < ENTI 10 PA)
+       ========================================================================= */
     function syncVolunteerAuthorityFromKarma() {
       if (!state || !state.session) return;
       if (state.session.role === 'volunteer') {
         const pa = computeVolunteerPAFromKarma(state.karma);
         state.session.paWeight = pa;
-        state.session.label = getVolunteerRankTitle(pa);
+        state.session.label = getVolunteerRankTitle(state.karma);
       } else if (state.session.role === 'clinic' || state.session.role === 'shelter') {
-        state.session.paWeight = 6;
-      } else if (state.session.role === 'admin') {
         state.session.paWeight = 10;
+      } else if (state.session.role === 'admin') {
+        state.session.paWeight = 50;
       }
     }
 
@@ -720,7 +752,73 @@
     }
 
     function getUserUniqueKey() {
-      return (state.session && (state.session.email || state.session.entityId || state.session.label)) || 'anon_merida';
+      return (state.session && (state.session.uid || state.session.email || state.session.entityId || state.session.label)) || 'anon_merida';
+    }
+
+    /* =========================================================================
+       GEOHASH LEGGERO & PREFERENZE NOTIFICHE A RAGGIO FISSO (3 KM DAL DEVICE)
+       ========================================================================= */
+    function encodeSimpleGeoCell(lat, lng) {
+      const la = Math.round((Number(lat) || 20.9865) * 100);
+      const ln = Math.round((Number(lng) || -89.6165) * 100);
+      return `mer_${la}_${ln}`;
+    }
+
+    function toggleNotifPref(prefKey, checked) {
+      state.notifPrefs = state.notifPrefs || { sosRadius: true, followedPins: true, cityBroadcast: true };
+      state.notifPrefs[prefKey] = !!checked;
+      NekoSFX.tap();
+      saveState();
+      notify('🔔 Preferencias de notificación actualizadas.');
+    }
+
+    function shouldReceiveNotification(kind, itemLat, itemLng, pinId = '') {
+      const prefs = state.notifPrefs || { sosRadius: true, followedPins: true, cityBroadcast: true };
+      if (kind === 'followed' && pinId && (state.followedPins || []).includes(pinId)) {
+        return prefs.followedPins !== false;
+      }
+      if (kind === 'sos_radius' && itemLat && itemLng) {
+        if (prefs.sosRadius === false) return false;
+        const distM = haversineMeters(state.userCoords.lat, state.userCoords.lng, itemLat, itemLng);
+        return distM <= 3000;
+      }
+      return prefs.cityBroadcast !== false;
+    }
+
+    /* =========================================================================
+       SHADOWBANNING TEMPORALE A 24 ORE (VELOCITY CHECK ANTI-TROLL)
+       3 segnalazioni/rimozioni in 24h -> Shadowban 48h. Errori sparsi in mesi = 0 blocchi.
+       ========================================================================= */
+    function recordUserStrike24h(authorKey) {
+      if (!authorKey || authorKey === 'admin') return false;
+      const now = Date.now();
+      state.userStrikes24h = state.userStrikes24h || {};
+      const recent = (state.userStrikes24h[authorKey] || []).filter(ts => now - ts <= 86400000);
+      recent.push(now);
+      state.userStrikes24h[authorKey] = recent;
+      if (recent.length >= 3) {
+        state.shadowbannedUsers = state.shadowbannedUsers || {};
+        state.shadowbannedUsers[authorKey] = now + 172800000; // 48h shadowban
+        return true;
+      }
+      return false;
+    }
+
+    function isUserShadowbanned(authorKey) {
+      if (!authorKey || !state.shadowbannedUsers) return false;
+      const until = state.shadowbannedUsers[authorKey];
+      if (!until) return false;
+      if (Date.now() > until) {
+        delete state.shadowbannedUsers[authorKey];
+        return false;
+      }
+      return true;
+    }
+
+    function isItemVisibleToCurrentUser(item) {
+      if (!item || !item.shadowHidden) return true;
+      if (state.session.role === 'admin') return true;
+      return item.creatorKey === getUserUniqueKey();
     }
 
     function checkMidnightCloseFlagsReset() {
@@ -738,6 +836,9 @@
       if (changed) saveState();
     }
 
+    /* =========================================================================
+       VERO MOTORE BACKEND FIREBASE (COLLEZIONI SEPARATE + OFFLINE CACHE + STORAGE BUCKET)
+       ========================================================================= */
     function initFirebaseCloud() {
       const demoBox = document.getElementById('demo-role-switcher-box');
       if (!FIREBASE_CONFIG.apiKey || typeof firebase === 'undefined') {
@@ -749,46 +850,119 @@
         if (!firebase.apps.length) fbApp = firebase.initializeApp(FIREBASE_CONFIG);
         fbAuth = firebase.auth();
         fbDb = firebase.firestore();
+        if (firebase.storage) fbStorage = firebase.storage();
+
+        // Attiva Offline Persistence per volontari in zone con scarsa copertura 4G
+        fbDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
         const pill = document.getElementById('firebase-status-pill');
         if (pill) {
           pill.className = 'p-2 rounded-xl bg-emerald-200 border border-[#2B1B10] text-[#2B1B10] text-[9.5px] font-bold flex items-center gap-1.5';
-          pill.innerHTML = `${nekoSvg('check','w-4 h-4')}<span>Producción Activa: Conectado a Google Firebase y Firestore</span>`;
+          pill.innerHTML = `${nekoSvg('check','w-4 h-4')}<span>Backend Real Activo: Firestore Multi-Colección + Storage + Offline Cache</span>`;
         }
-        const docRef = fbDb.collection('mishimaya_state').doc('merida_live');
-        docRef.get().then(doc => { if (!doc.exists) syncStateToCloudFirestore(); }).catch(() => {});
-        docRef.onSnapshot(doc => {
-          if (doc && doc.exists) {
-            const cloudData = doc.data();
-            if (cloudData && cloudData.updatedAt > (window.lastLocalSave || 0)) {
-              state.streetItems = cloudData.streetItems || state.streetItems;
-              state.clinics = cloudData.clinics || state.clinics;
-              state.shelters = cloudData.shelters || state.shelters;
-              state.campaigns = cloudData.campaigns || state.campaigns;
-              state.supplies = cloudData.supplies || state.supplies;
-              state.adoptions = cloudData.adoptions || state.adoptions;
-              state.outcomes = cloudData.outcomes || state.outcomes;
-              state.moderationReports = cloudData.moderationReports || state.moderationReports;
-              renderAll(true);
-            }
+
+        // Listener Real-Time Auth
+        fbAuth.onAuthStateChanged(user => {
+          if (user) {
+            state.session.uid = user.uid;
+            state.session.email = user.email || state.session.email;
+            fbDb.collection('users').doc(user.uid).get().then(doc => {
+              if (doc.exists) {
+                const uData = doc.data();
+                state.karma = uData.karma || state.karma;
+                state.session.role = uData.role || state.session.role;
+                state.session.quizMinPa = uData.quizMinPa || 1;
+                syncVolunteerAuthorityFromKarma();
+                renderAll(true);
+              }
+            }).catch(() => {});
           }
         });
+
+        // Listener sulle Vere Collezioni Firestore Separate (Scalabili per migliaia di utenti)
+        const bindCol = (colName, stateKey) => {
+          fbDb.collection(colName).limit(150).onSnapshot(snap => {
+            if (!snap.empty) {
+              state[stateKey] = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
+              renderAll(true);
+            }
+          }, () => {});
+        };
+        bindCol('pins', 'streetItems');
+        bindCol('campaigns', 'campaigns');
+        bindCol('supplies', 'supplies');
+        bindCol('adoptions', 'adoptions');
+        bindCol('outcomes', 'outcomes');
       } catch (e) {}
+    }
+
+    async function pushDocumentToFirestoreCollection(colName, docId, payload) {
+      if (!fbDb || !docId) return;
+      try {
+        await fbDb.collection(colName).doc(String(docId)).set(
+          Object.assign({}, payload, { updatedAt: Date.now() }),
+          { merge: true }
+        );
+      } catch (e) {}
+    }
+
+    async function deleteDocumentFromFirestoreCollection(colName, docId) {
+      if (!fbDb || !docId) return;
+      try { await fbDb.collection(colName).doc(String(docId)).delete(); } catch (e) {}
     }
 
     function syncStateToCloudFirestore() {
       if (!fbDb) return;
       window.lastLocalSave = Date.now();
-      fbDb.collection('mishimaya_state').doc('merida_live').set({
-        updatedAt: window.lastLocalSave,
-        streetItems: state.streetItems,
-        clinics: state.clinics,
-        shelters: state.shelters,
-        campaigns: state.campaigns,
-        supplies: state.supplies,
-        adoptions: state.adoptions,
-        outcomes: state.outcomes,
-        moderationReports: state.moderationReports
-      }, { merge: true }).catch(() => {});
+      if (state.session && state.session.uid) {
+        pushDocumentToFirestoreCollection('users', state.session.uid, {
+          email: state.session.email,
+          role: state.session.role,
+          karma: state.karma,
+          paWeight: state.session.paWeight,
+          quizMinPa: state.session.quizMinPa || 1,
+          label: state.session.label
+        });
+      }
+    }
+
+    /* =========================================================================
+       UPLOAD FOTO SU FIREBASE STORAGE BUCKET (ZERO BASE64 NEL DATABASE IN PRODUZIONE)
+       ========================================================================= */
+    function compressAndUploadPhoto(file, callback) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const im = new Image();
+        im.onload = () => {
+          const maxSide = 1280, scale = Math.min(1, maxSide / Math.max(im.width, im.height));
+          const cv = document.createElement('canvas');
+          cv.width = Math.round(im.width * scale); cv.height = Math.round(im.height * scale);
+          const ctx = cv.getContext('2d');
+          ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(im, 0, 0, cv.width, cv.height);
+          const fallbackDataUrl = cv.toDataURL('image/jpeg', 0.75);
+
+          if (fbStorage && FIREBASE_CONFIG.storageBucket) {
+            cv.toBlob(async blob => {
+              if (!blob) { callback(fallbackDataUrl); return; }
+              try {
+                const filePath = `mishimaya_photos/${Date.now()}_${Math.random().toString(36).slice(2, 7)}.jpg`;
+                const ref = fbStorage.ref().child(filePath);
+                await ref.put(blob, { contentType: 'image/jpeg' });
+                const downloadUrl = await ref.getDownloadURL();
+                callback(downloadUrl);
+              } catch (err) {
+                callback(fallbackDataUrl);
+              }
+            }, 'image/jpeg', 0.75);
+          } else {
+            callback(fallbackDataUrl);
+          }
+        };
+        im.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
 
     function updateSfxVolume(val) {
@@ -873,7 +1047,7 @@
       syncVolunteerAuthorityFromKarma();
       const bar = document.getElementById('top-exp-bar');
       if (!bar) return;
-      const pct = Math.min(100, Math.max(14, Math.round(((state.karma % 2000) / 2000) * 100)));
+      const pct = Math.min(100, Math.max(12, Math.round(((state.karma % 150) / 150) * 100)));
       bar.style.width = '0%';
       setTimeout(() => { bar.style.width = pct + '%'; }, 60);
     }
@@ -884,9 +1058,6 @@
       return `<svg class="w-4 h-4 inline-block shrink-0" viewBox="0 0 64 64"><path d="M12 26 L16 10 L28 18 Q32 16 36 18 L48 10 L52 26 Q56 36 52 46 Q44 54 32 54 Q20 54 12 46 Q8 36 12 26 Z" fill="${colors[coat] || '#FFFDF7'}" stroke="#2B1B10" stroke-width="4"/><circle cx="23" cy="34" r="3.5" fill="${eyes}"/><circle cx="41" cy="34" r="3.5" fill="${eyes}"/><path d="M28 41 Q32 44 36 41" fill="none" stroke="${eyes}" stroke-width="3" stroke-linecap="round"/></svg>`;
     }
 
-    /* =========================================================================
-       IL TOCCO SUL TASTO DI SEGNALAZIONE CHIUDE AUTOMATICAMENTE LE SCHEDE IN PRIMO PIANO
-       ========================================================================= */
     function toggleFanReportMenu(forceState, silent = false) {
       const wrap = document.getElementById('fan-report-menu');
       const lbl = document.getElementById('fan-trigger-label');
@@ -901,40 +1072,41 @@
       if (lbl) lbl.textContent = next ? 'Cerrar' : 'Reportar';
     }
 
-    function compressImageWhatsAppSD(file, callback) {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const im = new Image();
-        im.onload = () => {
-          const maxSide = 1280, scale = Math.min(1, maxSide / Math.max(im.width, im.height));
-          const cv = document.createElement('canvas');
-          cv.width = Math.round(im.width * scale); cv.height = Math.round(im.height * scale);
-          const ctx = cv.getContext('2d');
-          ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(im, 0, 0, cv.width, cv.height);
-          callback(cv.toDataURL('image/jpeg', 0.75));
-        };
-        im.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-
     /* =========================================================================
-       MODERAZIONE COOPERATIVA A 3 LIVELLI CON ESCALATION GEOGRAFICA + ADMIN MASTER
+       MODERAZIONE A 3 LIVELLI + SHADOWBAN 24H + PROTEZIONE ENTI VERIFICATI
        ========================================================================= */
     function executeElementRemovalByType(targetType, targetId, parentId = '') {
-      if (targetType === 'street') state.streetItems = state.streetItems.filter(x => x.id !== targetId);
-      else if (targetType === 'clinic') state.clinics = state.clinics.filter(x => x.id !== targetId);
-      else if (targetType === 'shelter') state.shelters = state.shelters.filter(x => x.id !== targetId);
-      else if (targetType === 'campaign') state.campaigns = state.campaigns.filter(x => x.id !== targetId);
-      else if (targetType === 'supply') state.supplies = state.supplies.filter(x => x.id !== targetId);
-      else if (targetType === 'adopt') state.adoptions = state.adoptions.filter(x => x.id !== targetId);
-      else if (targetType === 'story') state.outcomes = state.outcomes.filter(x => x.id !== targetId);
-      else if (targetType === 'photo' && parentId) {
+      let authorKey = '';
+      if (targetType === 'street') {
+        const it = state.streetItems.find(x => x.id === targetId);
+        if (it) authorKey = it.creatorKey || '';
+        state.streetItems = state.streetItems.filter(x => x.id !== targetId);
+        deleteDocumentFromFirestoreCollection('pins', targetId);
+      } else if (targetType === 'clinic') {
+        state.clinics = state.clinics.filter(x => x.id !== targetId);
+      } else if (targetType === 'shelter') {
+        state.shelters = state.shelters.filter(x => x.id !== targetId);
+      } else if (targetType === 'campaign') {
+        const cp = state.campaigns.find(x => x.id === targetId);
+        if (cp) authorKey = cp.creatorKey || '';
+        state.campaigns = state.campaigns.filter(x => x.id !== targetId);
+        deleteDocumentFromFirestoreCollection('campaigns', targetId);
+      } else if (targetType === 'supply') {
+        state.supplies = state.supplies.filter(x => x.id !== targetId);
+        deleteDocumentFromFirestoreCollection('supplies', targetId);
+      } else if (targetType === 'adopt') {
+        const ad = state.adoptions.find(x => x.id === targetId);
+        if (ad) authorKey = ad.creatorKey || '';
+        state.adoptions = state.adoptions.filter(x => x.id !== targetId);
+        deleteDocumentFromFirestoreCollection('adoptions', targetId);
+      } else if (targetType === 'story') {
+        state.outcomes = state.outcomes.filter(x => x.id !== targetId);
+        deleteDocumentFromFirestoreCollection('outcomes', targetId);
+      } else if (targetType === 'photo' && parentId) {
         const st = state.streetItems.find(x => x.id === parentId);
         if (st && st.folderPhotos) st.folderPhotos.splice(Number(targetId), 1);
       }
+      if (authorKey) recordUserStrike24h(authorKey);
       if (state.moderationReports) delete state.moderationReports[targetType + ':' + targetId];
       closeCenterModal(); closeMapPinCard(); renderAll();
     }
@@ -943,10 +1115,25 @@
       if (state.session.role !== 'admin') return;
       NekoSFX.tap();
       executeElementRemovalByType(targetType, targetId, parentId);
-      notify(`🛡️ Admin: "${title}" eliminado definitivamente.`);
+      notify(`👑 Admin: "${title}" eliminado definitivamente.`);
     }
 
     function openReportInappropriateModal(targetType, targetId, title = 'Contenido', lat = 20.9865, lng = -89.6165, parentId = '') {
+      // Le cliniche e i rifugi confermati sono protetti dal tasto report (valutabili solo con Opinar)
+      if (targetType === 'clinic') {
+        const cl = state.clinics.find(c => c.id === targetId);
+        if (cl && cl.confirmed && state.session.role !== 'admin') {
+          NekoSFX.alreadyActive();
+          notify('🏥 Esta clínica ya está verificada. Usa el botón "⭐ Opinar" para evaluar su servicio.');
+          return;
+        }
+      }
+      if (targetType === 'shelter' && state.session.role !== 'admin') {
+        NekoSFX.alreadyActive();
+        notify('🏡 Este refugio es una entidad oficial verificada. Usa el botón "⭐ Opinar" para evaluarlo.');
+        return;
+      }
+
       const key = targetType + ':' + targetId;
       state.moderationReports = state.moderationReports || {};
       const rep = state.moderationReports[key] || { flags: 0, voters: [], paAgainst: 0, escalated: false, expandedWide: false, title, targetType, targetId, parentId, lat, lng };
@@ -961,10 +1148,10 @@
         <div class="space-y-2.5 text-[11px]">
           <h3 class="font-neko font-bold text-xs">Reportar o Verificar: "${title}"</h3>
           <div class="p-2.5 neko-subcard space-y-1 text-[10px]">
-            <p><strong>Estado actual:</strong> ${rep.flags}/3 reportes iniciales • Peso acumulado: ${rep.paAgainst}/18 PA</p>
+            <p><strong>Estado actual:</strong> ${rep.flags}/3 reportes iniciales • Peso acumulado: ${rep.paAgainst}/20 PA</p>
             <p class="opacity-85">• <strong>Nivel 1 (1–2 reportes):</strong> Alerta preventiva a vecinos cercanos (1.5 km).</p>
-            <p class="opacity-85">• <strong>Nivel 2 (3 reportes):</strong> Escalación a usuarios con <strong>Alta Autoridad (≥ 4 PA, Clínicas y Refugios)</strong> en 3 km.</p>
-            <p class="opacity-85">• <strong>Nivel 3 (Zona ampliada):</strong> Si no hay Alta Autoridad en 3 km, se extiende a toda Mérida (15 km).</p>
+            <p class="opacity-85">• <strong>Nivel 2 (3 reportes):</strong> Escalación a usuarios con <strong>Alta Autoridad (≥ 4 PA, Clínicas 10 PA y Refugios 10 PA)</strong> en 3 km.</p>
+            <p class="opacity-85">• <strong>Shadowban Temporal (24h):</strong> Si un usuario acumula 3 contenidos falsos retirados en menos de 24 horas, sus futuros reportes quedan ocultos en modo sombra.</p>
           </div>
           <form onsubmit="submitContentReport(event,'${targetType}','${targetId}','${title.replace(/'/g, '')}',${lat},${lng},'${parentId}')" class="space-y-2">
             <select id="mod-rep-reason" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-bold text-[10px]">
@@ -1004,7 +1191,7 @@
       rep.flags += 1;
       rep.paAgainst += weight;
 
-      if (rep.paAgainst >= 18) {
+      if (rep.paAgainst >= 20) {
         executeElementRemovalByType(targetType, targetId, parentId);
         notify(`🗑️ "${title}" eliminado automáticamente por consenso de seguridad comunitaria.`);
         return;
@@ -1051,9 +1238,6 @@
       notify('🛡️ Reporte malicioso descartado por Alta Autoridad. El contenido queda protegido (+25 EXP).');
     }
 
-    /* =========================================================================
-       AVVISO LEGALE, PRIVACY LFPDPPP, NON-CUSTODIA SPEI E TUTELA FAUNA YUCATÁN
-       ========================================================================= */
     function openLegalPrivacyModal() {
       openCenterModal(`
         <div class="flex justify-between items-center border-b pb-1.5">
@@ -1075,16 +1259,12 @@
           </div>
           <div class="p-2.5 neko-subcard space-y-1">
             <p class="font-neko font-bold text-xs">4. Aviso de Privacidad LFPDPPP y Derechos ARCO</p>
-            <p>Tus datos (correo y teléfono opcional) se utilizan únicamente para la red cívica felina y nunca se ceden a terceros sin tu consentimiento por caso. Puedes ejercer tus derechos ARCO (Acceso, Rectificación, Cancelación y Oposición) borrando tus datos locales en cualquier momento:</p>
+            <p>Tus datos se utilizan únicamente para la red cívica felina y nunca se ceden a terceros sin tu consentimiento por caso. Puedes ejercer tus derechos ARCO borrando tus datos locales en cualquier momento:</p>
             <button type="button" onclick="if(confirm('¿Deseas borrar tus datos de sesión local (Derecho ARCO de Cancelación)?')){localStorage.removeItem(STORAGE_KEY);location.reload();}" class="w-full neko-btn py-1.5 mt-1 bg-rose-200 text-rose-950 font-bold text-[9.5px]">🗑️ Ejercer Derecho ARCO: Borrar Mis Datos Locales</button>
           </div>
         </div>`);
     }
 
-    /* =========================================================================
-       CREAZIONE NUOVO PIN CLINICA SULLA MAPPA (PRIMA QUESTIONARIO CONOSCITIVO
-       E INVITO A PARTECIPARE AL PROGETTO, POI ORARI E CONTATTI)
-       ========================================================================= */
     function openSuggestClinicModal(customLat, customLng) {
       const lat = customLat !== undefined ? customLat : state.userCoords.lat;
       const lng = customLng !== undefined ? customLng : state.userCoords.lng;
@@ -1098,7 +1278,6 @@
             <span class="font-mono font-bold">📍 Punto GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)}</span>
             <button type="button" onclick="startDirectMapReportFlow('clinic_new')" class="neko-btn px-2 py-1 bg-amber-300 text-[#2B1B10] font-bold text-[9px]">Mover Pin</button>
           </div>
-          <!-- PASO 1: PREGUNTAS DE CONOCIMIENTO E INVITACIÓN AL PROYECTO ANTES DE HORARIOS -->
           <div class="p-2.5 rounded-xl bg-emerald-100 border-2 border-[#2B1B10] space-y-1.5 text-[10px]">
             <p class="font-neko font-bold text-[10.5px]">🩺 Paso 1: ¿Conoces esta clínica veterinaria?</p>
             <label class="flex items-start gap-1.5 cursor-pointer">
@@ -1118,7 +1297,6 @@
               </label>
             </div>
           </div>
-          <!-- PASO 2: NOMBRE Y HORARIOS -->
           <div class="space-y-1.5">
             <p class="font-neko font-bold text-[10px]">📋 Paso 2: Datos básicos de la clínica:</p>
             <input id="sug-cl-name" type="text" required placeholder="Nombre de la Clínica Veterinaria *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
@@ -1226,8 +1404,7 @@
       ev.preventDefault();
       const name = document.getElementById('st-name').value.trim(), afterDesc = document.getElementById('st-desc').value.trim();
       const now = Date.now();
-      state.outcomes = state.outcomes || [];
-      state.outcomes.unshift({
+      const storyObj = {
         id: 'out-' + now, kind,
         entityType: state.session.role === 'admin' ? 'volunteer' : state.session.role,
         entityId: state.session.entityId || 'vol',
@@ -1236,7 +1413,10 @@
         createdAt: now,
         dateLabel: new Date(now).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }),
         photoUrl: window.lastStoryImg || ''
-      });
+      };
+      state.outcomes = state.outcomes || [];
+      state.outcomes.unshift(storyObj);
+      pushDocumentToFirestoreCollection('outcomes', storyObj.id, storyObj);
       window.lastStoryImg = ''; state.karma += 40;
       renderAll(); animateKarmaExpBar(); launchNekoCelebration(); openCommunityStoriesModal(kind, roleFilter);
     }
@@ -1346,10 +1526,14 @@
       notify('Cuenta Google vinculada.');
     }
 
+    /* =========================================================================
+       TEST DI CONOSCENZA FELINA E TENUTA RESPONSABILE A 6 DOMANDE PESATE
+       3 Domande Facili (10 pt ciascuna) + 3 Domande Protocollo/TNR (25 pt ciascuna = 105 pt)
+       ========================================================================= */
     function openAuthAndOnboardingModal(selectedRole = 'volunteer') {
       openCenterModal(`
         <div class="flex justify-between items-center border-b pb-1.5">
-          <div><span class="px-2 py-0.5 rounded-full bg-emerald-300 text-[#2B1B10] font-neko font-bold text-[8.5px]">REGISTRO E INICIO DE SESIÓN (18+)</span><h3 class="font-neko font-bold text-xs mt-0.5">Configura tu Cuenta y Edad</h3></div>
+          <div><span class="px-2 py-0.5 rounded-full bg-emerald-300 text-[#2B1B10] font-neko font-bold text-[8.5px]">REGISTRO Y TEST DE CONOCIMIENTO (18+)</span><h3 class="font-neko font-bold text-xs mt-0.5">Configura tu Cuenta y Autoridad</h3></div>
           <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
         </div>
         <div class="space-y-2 text-[11px]">
@@ -1365,17 +1549,60 @@
             <button type="button" onclick="openAuthAndOnboardingModal('shelter')" class="neko-btn py-1.5 font-bold ${selectedRole === 'shelter' ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}">Refugio</button>
             <button type="button" onclick="openAuthAndOnboardingModal('admin')" class="neko-btn py-1.5 font-bold ${selectedRole === 'admin' ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}">Admin</button>
           </div>
-          <form onsubmit="completeOnboardingQuiz(event,'${selectedRole}')" class="p-2.5 neko-subcard space-y-1.5 text-[10px]">
+          <form onsubmit="completeOnboardingQuiz(event,'${selectedRole}')" class="p-2.5 neko-subcard space-y-2 text-[10px]">
             ${selectedRole === 'volunteer' ? `
-              <p class="font-neko font-bold">Tu Autoridad (PA) sube automáticamente con tu experiencia (EXP):</p>
-              <label class="flex items-center gap-1.5"><input type="checkbox" name="vq1" checked /> <span>¿Participas en rescates, TNR o cuidado de colonias en Mérida?</span></label>` : `
+              <p class="font-neko font-bold text-[10.5px] text-amber-950">🐱 Test de Conocimiento Felino y Tenencia Responsable (Define tu Karma y PA Inicial):</p>
+              <div class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+                <div class="p-2 rounded-lg bg-[var(--bg-card)] border border-[#2B1B10]/30 space-y-1">
+                  <p class="font-bold">1. [Base • 10 pts] ¿Los gatos viven felices y seguros si salen libremente a la calle?</p>
+                  <select name="q1" class="w-full px-1.5 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-semibold">
+                    <option value="correct">No: en la calle sufren atropellamientos, ataques, venenos y depredan fauna local</option>
+                    <option value="wrong">Sí, necesitan salir solos a pasear por los techos</option>
+                  </select>
+                </div>
+                <div class="p-2 rounded-lg bg-[var(--bg-card)] border border-[#2B1B10]/30 space-y-1">
+                  <p class="font-bold">2. [Base • 10 pts] ¿Es normal que un gato respire con la boca abierta (jadeando) como un perro?</p>
+                  <select name="q2" class="w-full px-1.5 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-semibold">
+                    <option value="correct">No: en un gato respirar con la boca abierta es señal de emergencia médica o golpe de calor</option>
+                    <option value="wrong">Sí, es su forma normal de refrescarse todos los días</option>
+                  </select>
+                </div>
+                <div class="p-2 rounded-lg bg-[var(--bg-card)] border border-[#2B1B10]/30 space-y-1">
+                  <p class="font-bold">3. [Base • 10 pts] ¿Se puede dar paracetamol humano, leche de vaca o tener lirios en casa con gatos?</p>
+                  <select name="q3" class="w-full px-1.5 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-semibold">
+                    <option value="correct">Jamás: el paracetamol y los lirios son mortalmente tóxicos para los gatos</option>
+                    <option value="wrong">Sí, en dosis pequeñas no les hace daño</option>
+                  </select>
+                </div>
+                <div class="p-2 rounded-lg bg-amber-100/80 border border-[#2B1B10]/50 space-y-1">
+                  <p class="font-bold">4. [Protocolo TNR • 25 pts] ¿Qué significa el corte recto (muesca) en la punta de la oreja de un gato comunitario?</p>
+                  <select name="q4" class="w-full px-1.5 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-semibold">
+                    <option value="correct">Que ya fue esterilizado bajo protocolo TNR y NO debe ser retirado de su colonia</option>
+                    <option value="wrong">Que tuvo una pelea y hay que encerrarlo</option>
+                  </select>
+                </div>
+                <div class="p-2 rounded-lg bg-amber-100/80 border border-[#2B1B10]/50 space-y-1">
+                  <p class="font-bold">5. [Casa Segura • 25 pts] Si ves en la banqueta a un gato gordito, limpio y con collar sin heridas, ¿qué haces?</p>
+                  <select name="q5" class="w-full px-1.5 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-semibold">
+                    <option value="correct">Tomar foto, preguntar a vecinos y activar Casa Segura; NUNCA sustraerlo de su cuadra</option>
+                    <option value="wrong">Llevármelo inmediatamente a mi casa</option>
+                  </select>
+                </div>
+                <div class="p-2 rounded-lg bg-amber-100/80 border border-[#2B1B10]/50 space-y-1">
+                  <p class="font-bold">6. [Adopción • 25 pts] ¿Cuál es el requisito obligatorio para toda adopción o Foster en MishiMaya?</p>
+                  <select name="q6" class="w-full px-1.5 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-semibold">
+                    <option value="correct">Compromiso estricto 100% Hogar Interior con mosquiteros y cero acceso a la calle</option>
+                    <option value="wrong">Dejarlo salir al parque durante el día</option>
+                  </select>
+                </div>
+              </div>` : `
               <input id="ob-name" type="text" required value="${selectedRole === 'admin' ? 'Admin Mérida' : ''}" placeholder="Nombre Oficial de la Entidad *" class="w-full px-2 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
               ${selectedRole !== 'admin' ? `<input id="ob-clabe" type="text" placeholder="CLABE o medio de pago oficial (Opcional)" class="w-full px-2 py-1 rounded border border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-mono" />` : ''}`}
             <label class="flex items-start gap-1.5 pt-1 cursor-pointer font-semibold">
               <input type="checkbox" required checked class="mt-0.5 rounded" />
               <span>Confirmo que tengo <strong>18 años o más</strong> y acepto el <u onclick="event.preventDefault(); openLegalPrivacyModal()">Aviso Legal, Privacidad LFPDPPP y No-Custodia Financiera</u>.</span>
             </label>
-            <button type="submit" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">Activar Cuenta e Iniciar Tour (+100 EXP)</button>
+            <button type="submit" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">Evaluar Test, Activar Cuenta e Iniciar Tour</button>
           </form>
         </div>`);
     }
@@ -1392,16 +1619,36 @@
       const phone = (document.getElementById('auth-phone-inp')?.value || '').replace(/\D/g, '');
       const customClabe = (document.getElementById('ob-clabe')?.value || '').trim();
       const obName = (document.getElementById('ob-name')?.value || '').trim();
-      state.karma += 100;
-      const volPa = computeVolunteerPAFromKarma(state.karma);
+
+      let quizMinPa = 1;
+      let bonusExp = 100;
+      if (role === 'volunteer') {
+        const f = ev.target;
+        let pts = 0;
+        if (f.q1?.value === 'correct') pts += 10;
+        if (f.q2?.value === 'correct') pts += 10;
+        if (f.q3?.value === 'correct') pts += 10;
+        if (f.q4?.value === 'correct') pts += 25;
+        if (f.q5?.value === 'correct') pts += 25;
+        if (f.q6?.value === 'correct') pts += 25;
+        quizMinPa = pts >= 95 ? 3 : (pts >= 55 ? 2 : 1);
+        bonusExp = pts * 12;
+        state.karma = Math.max(state.karma, bonusExp);
+      } else {
+        state.karma += 100;
+      }
+
       state.session = {
         role,
+        uid: state.session.uid || '',
         entityId: role === 'clinic' ? 'amicagatos' : (role === 'shelter' ? 'afad' : role),
         entityName: obName || email.split('@')[0],
-        paWeight: role === 'admin' ? 10 : (role === 'volunteer' ? volPa : 6),
-        label: role === 'admin' ? 'Administrador General (10 PA)' : (role === 'volunteer' ? getVolunteerRankTitle(volPa) : `${obName || 'Entidad Oficial'} (6 PA Máx)`),
+        quizMinPa,
+        paWeight: role === 'admin' ? 50 : (role === 'volunteer' ? computeVolunteerPAFromKarma(state.karma) : 10),
+        label: role === 'admin' ? 'Administrador General (50 PA)' : (role === 'volunteer' ? getVolunteerRankTitle(state.karma) : `${obName || 'Entidad Oficial'} (10 PA)`),
         email, phone, age
       };
+
       if (role === 'clinic' && state.clinics[0]) {
         state.clinics[0].appMember = true;
         if (customClabe) state.clinics[0].clabe = customClabe;
@@ -1415,18 +1662,18 @@
 
     const SPOTLIGHT_STAGES = [
       { tab: 'map', targetId: 'map-frame-inner', pos: 'bottom', badge: 'MANIFIESTO CÍVICO • PROPÓSITO DE MISHIMAYA', title: 'Red Cívica de Apoyo Mutuo en Mérida', desc: 'MishiMaya une a ciudadanos sensibles, clínicas y refugios contra el abandono felino: buscamos aliviar el sufrimiento de los gatos en calle, proteger a la fauna local y construir una iniciativa sólida que pronto llegue a la Administración Pública.' },
-      { tab: 'map', targetId: 'top-exp-box', pos: 'bottom', badge: 'ETAPA 2 DE 13 • FÓRMULA DE AUTORIDAD (PA)', title: 'Tu Autoridad (PA) Crece con tu Karma (EXP)', desc: 'El nivel de Autoridad de cada voluntario sube automáticamente de 1 PA a 5 PA según su EXP acumulado. Las Clínicas y Refugios verificados tienen el nivel máximo institucional (6 PA).' },
-      { tab: 'map', targetId: 'btn-top-account', pos: 'bottom', badge: 'ETAPA 3 DE 13 • MAYORÍA DE EDAD Y PRIVACIDAD', title: 'Registro 18+ y Consentimiento por Caso', desc: 'El acceso requiere mayoría de edad (18+). Tu número móvil permanece oculto por defecto y en cada caso la app pregunta si deseas compartirlo.' },
-      { tab: 'map', targetId: 'btn-top-drawer', pos: 'bottom', badge: 'ETAPA 4 DE 13 • MENÚ, MARCO LEGAL Y MEMORIA', title: 'Historias, Volumen SFX y Aviso Legal LFPDPPP', desc: 'En el menú lateral ☰ encuentras las Historias de Éxito, el Puente del Arcoíris, el control de volumen SFX y el Aviso Legal y de Privacidad ARCO.' },
-      { tab: 'map', targetId: 'map-filters-bar', pos: 'bottom', badge: 'ETAPA 5 DE 13 • PRESIDIOS REALES EN EL MAPA', title: 'Clínicas y Refugios Reales de Mérida (❮ ❯)', desc: 'El mapa inicia con las 10 clínicas felinas/hospitales 24h y los 4 refugios reales de Mérida.' },
-      { tab: 'map', targetId: 'map-pin-card', pos: 'top', action: 'showSamplePin', badge: 'ETAPA 6 DE 13 • MODERACIÓN COOPERATIVA (🚩)', title: 'Moderación por Niveles y Escalación Geográfica', desc: 'Si un contenido recibe 3 reportes (🚩), se escala automáticamente a los usuarios y entidades con Alta Autoridad en 3 km (o a toda Mérida si no hay en la zona).' },
+      { tab: 'map', targetId: 'top-exp-box', pos: 'bottom', badge: 'ETAPA 2 DE 13 • NIVELES 1-100 Y AUTORIDAD PA', title: 'Niveles de Karma (1–100) y Jerarquía Cívica', desc: 'Los voluntarios suben del Nivel 1 al 100 acumulando EXP, con una autoridad máxima de 5 PA. Las Clínicas y Refugios oficiales cuentan con 10 PA fijos para garantizar siempre el orden institucional.' },
+      { tab: 'map', targetId: 'btn-top-account', pos: 'bottom', badge: 'ETAPA 3 DE 13 • TEST FELINO Y PRIVACIDAD', title: 'Test de Conocimiento y Consentimiento WA', desc: 'El test inicial evalúa conocimientos vitales y protocolo TNR/Casa Segura. Tu móvil queda oculto por defecto y solo se comparte si lo autorizas en un caso específico.' },
+      { tab: 'map', targetId: 'btn-top-drawer', pos: 'bottom', badge: 'ETAPA 4 DE 13 • NOTIFICACIONES EN RADIO FIJO', title: 'Preferencias Push, Volumen SFX y Memoria', desc: 'En el menú lateral ☰ configuras qué notificaciones recibir (incluyendo alertas SOS en un radio fijo de 3 km alrededor de tu dispositivo), el volumen SFX y las Historias de Éxito.' },
+      { tab: 'map', targetId: 'map-filters-bar', pos: 'bottom', badge: 'ETAPA 5 DE 13 • PRESIDIOS REALES EN EL MAPA', title: 'Clínicas y Refugios Reales de Mérida (❮ ❯)', desc: 'El mapa muestra las 10 clínicas felinas/hospitales 24h y los 4 refugios reales de Mérida.' },
+      { tab: 'map', targetId: 'map-pin-card', pos: 'top', action: 'showSamplePin', badge: 'ETAPA 6 DE 13 • ENTIDADES PROTEGIDAS Y OPINAR', title: 'Entidades Verificadas y Moderación Anti-Troll', desc: 'Las clínicas y refugios confirmados están protegidos contra reportes maliciosos y se evalúan mediante Opinar en base 1000. Quien suba 3 reportes falsos en 24h entra en Shadowban automático.' },
       { tab: 'map', targetId: 'btn-map-novelty', pos: 'bottom', badge: 'ETAPA 7 DE 13 • BOTÓN NOVEDADES REDONDO', title: 'Centrado Secuencial de Novedades', desc: 'Toca repetidamente este botón redondo para saltar a cada novedad nueva o alerta escalada en el mapa.' },
-      { tab: 'map', targetId: 'fan-report-trigger', pos: 'top', action: 'openFan', badge: 'ETAPA 8 DE 13 • PATITA Y NUEVA CLÍNICA', title: 'Almohadilla de Gato y Invitación a Clínicas', desc: 'Tocar Reportar cierra cualquier tarjeta abierta. Al sugerir una nueva Clínica, la app pregunta primero tu experiencia y te invita a proponerles participar en MishiMaya.' },
+      { tab: 'map', targetId: 'fan-report-trigger', pos: 'top', action: 'openFan', badge: 'ETAPA 8 DE 13 • PATITA Y NUEVA CLÍNICA', title: 'Almohadilla de Gato e Invitación a Clínicas', desc: 'Tocar Reportar cierra cualquier tarjeta abierta. Al sugerir una nueva Clínica, la app pregunta primero tu experiencia y te invita a proponerles participar en MishiMaya.' },
       { tab: 'map', targetId: 'bottom-nav-bar', pos: 'top', badge: 'ETAPA 9 DE 13 • BARRA DE 5 SECCIONES', title: 'Navegación Fija con Avisos Guía', desc: 'La barra inferior mantiene el Mapa en el centro y guía tu atención hacia las secciones con casos activos.' },
       { tab: 'adopt', targetId: 'adopt-header-bar', pos: 'bottom', badge: 'ETAPA 10 DE 13 • ADOPCIÓN 100% INTERIOR', title: 'Adopción Responsable y Zoom de Fotos', desc: 'Toda adopción exige compromiso 100% interior. Toca cualquier foto para abrirla a pantalla completa.' },
       { tab: 'sos', targetId: 'subtabs-bar-sos', pos: 'bottom', badge: 'ETAPA 11 DE 13 • 4 SUBSECCIONES EN SOS', title: 'Urgencias, En Calle, Colonias y Voluntarios', desc: 'En SOS tienes 4 pestañas separadas: Urgencias SOS, En Calle (pines azules), Colonias censadas y Voluntarios.' },
-      { tab: 'shelters', targetId: 'subtabs-bar-shelters', pos: 'bottom', badge: 'ETAPA 12 DE 13 • REFUGIOS BASE 1000 PTS', title: 'Reputación en Base 1000 y Botón Opinar', desc: 'Los refugios y clínicas inician en la mitad de la barra (500/1000 pts). Los voluntarios pueden dar opiniones positivas o negativas multiplicadas por su nivel de Autoridad PA.' },
-      { tab: 'clinics', targetId: 'subtabs-bar-clinics', pos: 'bottom', badge: 'ETAPA 13 DE 13 • CLÍNICAS CON ADOPCIÓN Y OPINAR', title: 'Clínicas con Botones Adopción y Opinar', desc: 'Cada ficha de clínica incluye acceso directo a Campañas, Insumos, Adopción y Opinar en base 1000.' }
+      { tab: 'shelters', targetId: 'subtabs-bar-shelters', pos: 'bottom', badge: 'ETAPA 12 DE 13 • SIMETRÍA EN REFUGIOS', title: 'Refugios con Campañas, Insumos, Adopción y Opinar', desc: 'Tanto Refugios como Clínicas comparten una cuadrícula simétrica de 4 botones (Campañas, Insumos, Adopción y Opinar) sin límite burocrático de campañas.' },
+      { tab: 'clinics', targetId: 'subtabs-bar-clinics', pos: 'bottom', badge: 'ETAPA 13 DE 13 • SIMETRÍA EN CLÍNICAS', title: 'Clínicas con Acceso Directo a Adopción y Opinar', desc: 'Evalúa la atención de las clínicas felinas en base 1000 y consulta sus campañas médicas sin restricciones.' }
     ];
 
     function positionCutoutLensAndShields(el) {
@@ -1525,7 +1772,7 @@
       const idx = state.followedPins.indexOf(pinId);
       if (idx === -1) {
         state.followedPins.push(pinId);
-        if (!forceFollow) { NekoSFX.tap(); notify('Conectado a la red de este pin: recibirás avisos automáticos.'); }
+        if (!forceFollow) { NekoSFX.tap(); notify('🔔 Conectado a la red de este pin: recibirás avisos automáticos.'); }
       } else if (!forceFollow) {
         state.followedPins.splice(idx, 1);
         NekoSFX.tap(); notify('Notificaciones automáticas desactivadas para este pin.');
@@ -1539,7 +1786,10 @@
       const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       item.inAppMessages = item.inAppMessages || [];
       item.inAppMessages.unshift(`[${stamp}] ${state.session.label}: ${actionText}`);
-      state.inAppAlerts.unshift({ id: 'al-' + Date.now(), pinId: item.id, text: `Red Pin "${item.title}": ${actionText}`, time: stamp });
+      if (shouldReceiveNotification('followed', item.lat, item.lng, item.id)) {
+        state.inAppAlerts.unshift({ id: 'al-' + Date.now(), pinId: item.id, text: `Red Pin "${item.title}": ${actionText}`, time: stamp });
+      }
+      pushDocumentToFirestoreCollection('pins', item.id, item);
     }
 
     function awardKarmaWithCooldown(actionKey, points, isOnceEver = false) {
@@ -1592,7 +1842,9 @@
     function completeSosRescue(pinId) {
       const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
       broadcastPinUpdate(item, 'Rescate SOS completado e ingresado en clínica/refugio.');
-      state.streetItems = state.streetItems.filter(x => x.id !== pinId); state.karma += 100;
+      state.streetItems = state.streetItems.filter(x => x.id !== pinId);
+      deleteDocumentFromFirestoreCollection('pins', pinId);
+      state.karma += 100;
       syncVolunteerAuthorityFromKarma();
       closeCenterModal(); closeMapPinCard(); renderAll(); animateKarmaExpBar(); launchNekoCelebration();
       notify('¡Rescate SOS completado! El pin fue retirado del mapa (+100 EXP).');
@@ -1629,7 +1881,11 @@
 
     function getUnseenMapNovelties() {
       const list = [];
-      state.streetItems.forEach(i => { if (!i.seenNovelty) list.push({ kind: 'street', id: i.id, ref: i }); });
+      state.streetItems.filter(isItemVisibleToCurrentUser).forEach(i => {
+        if (!i.seenNovelty && shouldReceiveNotification('sos_radius', i.lat, i.lng, i.id)) {
+          list.push({ kind: 'street', id: i.id, ref: i });
+        }
+      });
       state.clinics.forEach(c => { if (!c.confirmed && !c.seenNovelty) list.push({ kind: 'clinic', id: c.id, ref: c }); });
       Object.values(state.moderationReports || {}).forEach(rep => {
         if (rep && rep.escalated && !rep.seenNovelty) list.push({ kind: 'moderation', id: rep.targetId, ref: rep });
@@ -1640,7 +1896,7 @@
     function cycleNextMapNovelty() {
       switchMainTab('map', true);
       const novelties = getUnseenMapNovelties();
-      if (!novelties.length) { NekoSFX.alreadyActive(); notify('No hay reportes ni escalaciones pendientes en el mapa.'); updateAllLogicalBadges(); return; }
+      if (!novelties.length) { NekoSFX.alreadyActive(); notify('No hay reportes ni escalaciones pendientes en tu radio.'); updateAllLogicalBadges(); return; }
       const next = novelties[0];
       next.ref.seenNovelty = true; updateAllLogicalBadges();
       if (next.kind === 'moderation') {
@@ -1661,9 +1917,10 @@
       const volCp = state.campaigns.filter(c => c.origin === 'volunteer' && c.raisedMxn < c.targetMxn).length;
       const volSp = state.supplies.filter(s => s.origin === 'volunteer' && !s.fulfilled).length;
       const allAdopt = state.adoptions.filter(a => a.status === 'available').length;
-      const sosEmerg = state.streetItems.filter(i => i.type === 'emergency').length;
-      const sosSight = state.streetItems.filter(i => i.type === 'sighting').length;
-      const sosCol = state.streetItems.filter(i => i.type === 'colony').length;
+      const visStreet = state.streetItems.filter(isItemVisibleToCurrentUser);
+      const sosEmerg = visStreet.filter(i => i.type === 'emergency').length;
+      const sosSight = visStreet.filter(i => i.type === 'sighting').length;
+      const sosCol = visStreet.filter(i => i.type === 'colony').length;
       const unseenCount = getUnseenMapNovelties().length;
 
       const setB = (id, v, animClass = '') => {
@@ -1712,7 +1969,7 @@
       getRadiusForZoom(z) { return z <= 11.5 ? 0.042 : (z <= 13 ? 0.020 : 0); },
       collectVisiblePins() {
         const flt = state.mapPinFilter, pins = [];
-        state.streetItems.forEach(item => {
+        state.streetItems.filter(isItemVisibleToCurrentUser).forEach(item => {
           if (flt !== 'all' && flt !== item.type) return;
           let badge = 'En Calle';
           if (item.type === 'emergency') badge = item.status === 'in_transit' ? 'Traslado' : 'SOS';
@@ -1789,7 +2046,7 @@
       navigator.geolocation.getCurrentPosition(pos => {
         state.userCoords = { lat: Number(pos.coords.latitude.toFixed(5)), lng: Number(pos.coords.longitude.toFixed(5)), accuracy: Math.round(pos.coords.accuracy || 6) };
         saveState(); renderHomeMapTab();
-        if (userClicked && mapInstance) { mapInstance.invalidateSize(); mapInstance.flyTo([state.userCoords.lat, state.userCoords.lng], 16, { duration: 0.5 }); notify(`Ubicación GPS centrada (${state.userCoords.lat}, ${state.userCoords.lng})`); }
+        if (userClicked && mapInstance) { mapInstance.invalidateSize(); mapInstance.flyTo([state.userCoords.lat, state.userCoords.lng], 15, { duration: 0.5 }); notify(`📍 Ubicación GPS centrada • Radio fijo de alertas: 3 km`); }
       }, () => { if (userClicked && mapInstance) mapInstance.flyTo([state.userCoords.lat, state.userCoords.lng], 14, { duration: 0.5 }); }, { enableHighAccuracy: true, timeout: 7000, maximumAge: 0 });
     }
 
@@ -1815,13 +2072,13 @@
       });
       renderHomeMapTab();
       if (filterType === 'clinics') { const t = state.clinics.find(c => !c.confirmed) || state.clinics[0]; if (t) showPinCardOverlay('clinic', t.id); }
-      else { const t = state.streetItems.find(i => i.type === filterType) || state.streetItems[0]; if (t) showPinCardOverlay('street', t.id); else notify('Sin reportes activos en esta categoría. Toca la patita Reportar para crear uno.'); }
+      else { const t = state.streetItems.filter(isItemVisibleToCurrentUser).find(i => i.type === filterType) || state.streetItems[0]; if (t) showPinCardOverlay('street', t.id); else notify('Sin reportes activos en esta categoría. Toca la patita Reportar para crear uno.'); }
     }
 
     function renderHomeMapTab() {
       initMap(); if (!markersLayer) return; markersLayer.clearLayers();
       const zoom = mapInstance ? mapInstance.getZoom() : 12.5;
-      L.circle([state.userCoords.lat, state.userCoords.lng], { radius: 35, color: '#10B981', fillColor: '#10B981', fillOpacity: 0.18, weight: 1.5 }).addTo(markersLayer);
+      L.circle([state.userCoords.lat, state.userCoords.lng], { radius: 45, color: '#10B981', fillColor: '#10B981', fillOpacity: 0.18, weight: 1.5 }).addTo(markersLayer);
       L.marker([state.userCoords.lat, state.userCoords.lng], { icon: L.divIcon({ className: 'leaflet-div-icon-neko', html: `<div class="w-4 h-4 rounded-full bg-emerald-500 border-2 border-white shadow-md"></div>`, iconSize: [16, 16], iconAnchor: [8, 8] }) }).addTo(markersLayer);
 
       const groups = ClusterEngine.buildClusters(ClusterEngine.collectVisiblePins(), ClusterEngine.getRadiusForZoom(zoom));
@@ -1906,19 +2163,24 @@
         if (mapInstance && !silent) mapInstance.flyTo([ent.lat, ent.lng], 15, { duration: 0.4 });
         const isGrey = kind === 'clinic' && !ent.confirmed, isClinic = kind === 'clinic';
         const repPts = ent.reputationPts !== undefined ? ent.reputationPts : (isGrey ? 0 : 500);
+        // Niente tasto Reportar per Cliniche confermate e Rifugi ufficiali (solo per cliniche grigie non confermate)
+        const reportBtnHtml = isGrey
+          ? `<button type="button" onclick="openReportInappropriateModal('clinic','${ent.id}','${ent.name.replace(/'/g, '')}',${ent.lat},${ent.lng})" class="px-1.5 py-0.5 rounded bg-rose-200 text-rose-950 border border-[#2B1B10] font-neko font-bold text-[8px]">🚩 Reportar</button>`
+          : '';
         box.innerHTML = `
           <div class="space-y-1.5 text-[11px]">
             <div class="flex justify-between items-start gap-2">
               <div class="min-w-0">
                 <div class="flex items-center gap-1 flex-wrap">
                   <span class="px-2 py-0.5 rounded-full ${isGrey ? 'bg-stone-300' : 'bg-emerald-300'} text-[#2B1B10] font-neko font-bold text-[8.5px]">${isGrey ? `⚪ Por confirmar (${ent.paScore || 1}/6 PA)` : `⭐ Reputación P2P: ${repPts} / 1000 pts`}</span>
-                  <button type="button" onclick="openReportInappropriateModal('${kind}','${ent.id}','${ent.name.replace(/'/g, '')}',${ent.lat},${ent.lng})" class="px-1.5 py-0.5 rounded bg-rose-200 text-rose-950 border border-[#2B1B10] font-neko font-bold text-[8px]">🚩 Reportar</button>
+                  ${reportBtnHtml}
                 </div>
                 <h4 class="font-neko font-bold text-xs mt-0.5 truncate">${ent.name}</h4>
                 <p class="text-[9.5px] opacity-85 truncate">${ent.zone} • ${ent.hours}</p>
               </div>
               <button type="button" onclick="NekoSFX.tap(); closeMapPinCard()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-[10px] font-bold">✕</button>
             </div>
+            <!-- GRIGLIA SIMMETRICA A 4 BOTTONI SU POPUP DI CLINICHE E RIFUGI -->
             <div class="grid grid-cols-4 gap-1">
               <button type="button" onclick="openEntityDetailModal('${kind}','${ent.id}','campaigns',true)" class="neko-btn py-1.5 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[8.5px]">Vista Rápida</button>
               <button type="button" onclick="NekoSFX.tap(); jumpToEntityCard('${kind}','${ent.id}')" class="neko-btn py-1.5 bg-[#F97316] text-white font-bold text-[8.5px]">Ir a Ficha ➔</button>
@@ -1945,7 +2207,7 @@
       const container = document.getElementById('swipe-area-adopt'); if (!container) return;
       const flt = state.adoptFilter || 'all';
       const isAdmin = state.session.role === 'admin';
-      const list = state.adoptions.filter(a => {
+      const list = state.adoptions.filter(isItemVisibleToCurrentUser).filter(a => {
         if (flt === 'all') return true;
         if (flt === 'volunteer') return a.origin === 'volunteer';
         return a.origin !== 'volunteer' && a.entityType === flt;
@@ -2026,6 +2288,7 @@
       ev.preventDefault();
       const cat = state.adoptions.find(x => x.id === adoptId); if (!cat) return;
       cat.status = 'evaluating'; state.karma += 50;
+      pushDocumentToFirestoreCollection('adoptions', cat.id, cat);
       syncVolunteerAuthorityFromKarma();
       closeCenterModal(); renderAll(); animateKarmaExpBar(); launchNekoCelebration();
       window.open(`https://wa.me/${cat.whatsapp}?text=${encodeURIComponent(`¡Hola! Solicito adoptar a ${cat.name} bajo el Protocolo de Adopción Responsable 100% Interior (sin salida a la calle).`)}`, '_blank', 'noopener');
@@ -2051,8 +2314,8 @@
       const isAdmin = state.session.role === 'admin';
 
       if (sub === 'volunteers') {
-        const volCamps = state.campaigns.filter(c => c.origin === 'volunteer');
-        const volSups = state.supplies.filter(s => s.origin === 'volunteer' && !s.fulfilled);
+        const volCamps = state.campaigns.filter(isItemVisibleToCurrentUser).filter(c => c.origin === 'volunteer');
+        const volSups = state.supplies.filter(isItemVisibleToCurrentUser).filter(s => s.origin === 'volunteer' && !s.fulfilled);
         const topActions = `
           <div class="grid grid-cols-2 gap-1.5">
             <button type="button" onclick="openVolunteerPublishModal('campaigns','volunteer')" class="neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-[10px] gap-0.5">${nekoSvg('plus','w-3 h-3')}<span>Campaña Médica (Con Receta)</span></button>
@@ -2096,7 +2359,7 @@
         return;
       }
 
-      const list = state.streetItems.filter(i => i.type === sub);
+      const list = state.streetItems.filter(isItemVisibleToCurrentUser).filter(i => i.type === sub);
       const emptyMeta = {
         emergency: { ico: 'sos', bg: 'bg-rose-100', btnBg: 'bg-rose-500 text-white', title: 'Sin emergencias SOS activas en este momento', btnTxt: 'Posicionar Nuevo SOS en el Mapa' },
         sighting:  { ico: 'cat', bg: 'bg-sky-100', btnBg: 'bg-sky-400 text-[#2B1B10]', title: 'Sin pines azules (gatos en calle o perdidos) hoy', btnTxt: 'Posicionar Pin En Calle en el Mapa' },
@@ -2213,7 +2476,7 @@
       pendingReportType = type;
       const lat = customLat !== undefined ? customLat : state.userCoords.lat;
       const lng = customLng !== undefined ? customLng : state.userCoords.lng;
-      const nearbyPins = state.streetItems.filter(p => p.type === type && haversineMeters(lat, lng, p.lat, p.lng) <= 130);
+      const nearbyPins = state.streetItems.filter(isItemVisibleToCurrentUser).filter(p => p.type === type && haversineMeters(lat, lng, p.lat, p.lng) <= 130);
       openCenterModal(`
         <div class="flex justify-between items-center border-b pb-1.5">
           <h3 class="font-neko font-bold text-xs">Nuevo Reporte (${type === 'emergency' ? 'SOS URGENTE' : (type === 'colony' ? 'COLONIA' : 'EN CALLE / PERDIDO')})</h3>
@@ -2227,7 +2490,7 @@
           </div>
           <div class="p-2 neko-subcard text-center space-y-1.5">
             <img id="captured-photo-preview" onclick="openPhotoLightbox(this.src,'Vista previa')" class="${window.lastCapturedDataUrl ? '' : 'hidden'} w-full max-h-48 object-contain rounded-xl border border-emerald-600 mx-auto zoomable-photo" src="${window.lastCapturedDataUrl || ''}" />
-            <label class="w-full neko-btn py-2 bg-sky-400 text-[#2B1B10] font-bold text-xs cursor-pointer">Tomar / Subir Foto Real (WhatsApp SD)<input type="file" accept="image/*" capture="environment" onchange="handleFilePhotoUpload(event)" class="hidden" /></label>
+            <label class="w-full neko-btn py-2 bg-sky-400 text-[#2B1B10] font-bold text-xs cursor-pointer">Tomar / Subir Foto Real (Cloud Storage)<input type="file" accept="image/*" capture="environment" onchange="handleFilePhotoUpload(event)" class="hidden" /></label>
           </div>
           ${type !== 'emergency' ? `<select id="rep-safety-type" class="w-full px-2 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-bold text-[10px]"><option value="owned_collar">Bien alimentado / Con collar (Casa Segura - NO retirar)</option><option value="tnr_ear">Muesca en oreja (Gato comunitario TNR - NO retirar)</option><option value="stray_risk">Gato perdido / Desorientado / En peligro vial</option></select>` : ''}
           <input id="rep-title" type="text" required placeholder="Descripción breve del michi *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#3D2618] bg-[#FFFDF7] text-[#2B1B10]" />
@@ -2248,11 +2511,11 @@
 
     function handleFilePhotoUpload(ev, targetPreviewId = 'captured-photo-preview', storeKey = 'lastCapturedDataUrl') {
       const file = ev.target.files?.[0]; if (!file) return;
-      compressImageWhatsAppSD(file, dataUrl => {
-        window[storeKey] = dataUrl;
+      compressAndUploadPhoto(file, urlOrData => {
+        window[storeKey] = urlOrData;
         const prev = document.getElementById(targetPreviewId);
-        if (prev) { prev.src = dataUrl; prev.classList.remove('hidden'); }
-        NekoSFX.celebrate(); notify('Foto real procesada en calidad WhatsApp SD.');
+        if (prev) { prev.src = urlOrData; prev.classList.remove('hidden'); }
+        NekoSFX.celebrate(); notify('📸 Foto optimizada y lista.');
       });
     }
 
@@ -2263,9 +2526,13 @@
       const waNum = (document.getElementById('rep-wa-num')?.value || state.session.phone || '').replace(/\D/g, '');
       if (waNum) state.session.phone = waNum;
       const id = 'pin-' + Date.now();
-      state.streetItems.unshift({
-        id, type, title, details: lm, lat, lng, status: 'active', responderName: '', responderSince: 0, lastReminderAt: 0, createdAt: Date.now(),
-        creatorKey: getUserUniqueKey(),
+      const uKey = getUserUniqueKey();
+      const newPin = {
+        id, type, title, details: lm, lat, lng,
+        geoCell: encodeSimpleGeoCell(lat, lng),
+        status: 'active', responderName: '', responderSince: 0, lastReminderAt: 0, createdAt: Date.now(),
+        creatorKey: uKey,
+        shadowHidden: isUserShadowbanned(uKey),
         paScore: state.session.paWeight || 1, paRequired: type === 'colony' ? 6 : 3,
         closeFlags: 0, closeFlagVoters: [], lastFlagDate: new Date().toISOString().slice(0, 10),
         quarantineNotice: false, seenNovelty: false,
@@ -2273,7 +2540,9 @@
         allowPublicWa: allowWa && !!waNum, reporterWa: waNum,
         inAppMessages: [`Reporte inicial publicado por ${state.session.label}.`],
         folderPhotos: [{ kind: 'cat', label: 'Foto Principal del Michi', note: title, author: state.session.label, imgData: window.lastCapturedDataUrl || '' }, { kind: 'landmark', label: 'Punto de referencia', note: lm, author: state.session.label, imgData: '' }]
-      });
+      };
+      state.streetItems.unshift(newPin);
+      pushDocumentToFirestoreCollection('pins', id, newPin);
       toggleFollowPin(id, true); window.lastCapturedDataUrl = ''; state.karma += 50;
       syncVolunteerAuthorityFromKarma();
       closeCenterModal(); switchMainTab('map', true); renderAll(); showPinCardOverlay('street', id);
@@ -2318,7 +2587,7 @@
       const isCamp = sectionKey === 'campaigns';
       openCenterModal(`
         <div class="flex justify-between items-center border-b pb-1.5">
-          <h3 class="font-neko font-bold text-xs">${isCamp ? 'Publicar Campaña Médica (Con Receta / Factura)' : 'Publicar Michi en Adopción Responsable (100% Interior)'}</h3>
+          <h3 class="font-neko font-bold text-xs">${isCamp ? 'Publicar Campaña Médica (Sin Límite de Casos)' : 'Publicar Michi en Adopción Responsable (100% Interior)'}</h3>
           <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
         </div>
         <form onsubmit="submitVolunteerPublish(event,'${sectionKey}','${targetType}')" class="space-y-2 text-[11px]">
@@ -2344,23 +2613,30 @@
       const name = document.getElementById('vol-pub-name').value.trim(), entName = document.getElementById('vol-pub-ent').value.trim();
       const desc = document.getElementById('vol-pub-desc').value.trim(), wa = document.getElementById('vol-pub-wa').value.replace(/\D/g, '') || '529991112233';
       const isVol = targetType === 'volunteer' || state.session.role === 'volunteer';
+      const uKey = getUserUniqueKey();
       if (sectionKey === 'campaigns') {
-        state.campaigns.unshift({
-          id: 'camp-' + Date.now(), creatorKey: getUserUniqueKey(), origin: isVol ? 'volunteer' : 'entity',
+        const campObj = {
+          id: 'camp-' + Date.now(), creatorKey: uKey, shadowHidden: isUserShadowbanned(uKey),
+          origin: isVol ? 'volunteer' : 'entity',
           targetType: isVol ? 'volunteer' : targetType, entityId: state.session.entityId || 'volunteer',
           entityName: entName, whatsapp: wa, catName: name, desc,
           clabe: document.getElementById('vol-pub-clabe').value.trim(),
           raisedMxn: 0, targetMxn: parseInt(document.getElementById('vol-pub-goal').value, 10) || 1500, pendingMxn: 0,
           catImg: window.lastVolCatImg || '', recetaImg: window.lastVolRecetaImg || ''
-        });
+        };
+        state.campaigns.unshift(campObj);
+        pushDocumentToFirestoreCollection('campaigns', campObj.id, campObj);
       } else {
-        state.adoptions.unshift({
-          id: 'ad-' + Date.now(), creatorKey: getUserUniqueKey(), origin: state.session.role === 'volunteer' ? 'volunteer' : 'entity',
+        const adObj = {
+          id: 'ad-' + Date.now(), creatorKey: uKey, shadowHidden: isUserShadowbanned(uKey),
+          origin: state.session.role === 'volunteer' ? 'volunteer' : 'entity',
           name, coat: state.theme, entityId: state.session.entityId || 'volunteer',
           entityType: state.session.role === 'clinic' ? 'clinic' : 'shelter',
           entityName: entName, whatsapp: wa, health: 'Protocolo 100% Interior', status: 'available',
           beforeDesc: document.getElementById('vol-pub-before').value.trim(), afterDesc: desc, photoUrl: window.lastVolCatImg || ''
-        });
+        };
+        state.adoptions.unshift(adObj);
+        pushDocumentToFirestoreCollection('adoptions', adObj.id, adObj);
       }
       state.karma += 60; syncVolunteerAuthorityFromKarma(); closeCenterModal(); renderAll(); animateKarmaExpBar(); launchNekoCelebration();
       notify('¡Publicación real activa (+60 EXP)!');
@@ -2379,8 +2655,8 @@
     }
 
     /* =========================================================================
-       RENDER RIFUGI E CLINICHE (BARRA REPUTAZIONE IN BASE 1000: PARTENZA 500/1000,
-       BOTTONE "OPINAR" SUI RIFUGI E "IR A ADOPCIÓN" SULLE CLINICHE)
+       SIMMETRIA PERFETTA A 4 BOTTONI (CAMPAÑAS | INSUMOS | ADOPCIÓN | OPINAR)
+       E PROTEZIONE DEGLI ENTI VERIFICATI DAL TASTO REPORT
        ========================================================================= */
     function renderSheltersTab() {
       const isAdmin = state.session.role === 'admin';
@@ -2396,7 +2672,6 @@
               <div><h3 class="font-neko font-bold text-[12.5px]">${s.name}</h3><p class="text-[10px] font-bold opacity-80">${s.zone}</p></div>
               <div class="flex items-center gap-1 shrink-0">
                 <button type="button" onclick="openSocialPosterGenerator('REFUGIO EN MÉRIDA','${s.name.replace(/'/g, '')}','${s.zone} • ${s.hours}','Servicios: ${s.services.join(', ')}','Reputación P2P: ${repPts}/1000 pts')" class="neko-btn px-2 py-0.5 bg-sky-300 text-[#2B1B10] font-bold text-[8.5px]">Compartir</button>
-                <button type="button" onclick="openReportInappropriateModal('shelter','${s.id}','${s.name.replace(/'/g, '')}',${s.lat},${s.lng})" class="neko-btn px-1.5 py-0.5 bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
                 ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('shelter','${s.id}','${s.name.replace(/'/g, '')}')" class="neko-btn px-1.5 py-0.5 bg-purple-300 text-[#2B1B10] font-bold text-[8px]">👑</button>` : ''}
               </div>
             </div>
@@ -2412,11 +2687,12 @@
               </div>
               <div class="w-full h-2.5 rounded-full bg-stone-300 border border-[#2B1B10] overflow-hidden"><div class="${repPts >= 500 ? 'bg-emerald-500' : 'bg-amber-500'} h-full neko-prog-fill" style="width:${barPct}%"></div></div>
             </div>
-            <!-- SOSTITUITO "IR A ADOPCIÓN" CON "⭐ OPINAR" SUI RIFUGI -->
-            <div class="grid grid-cols-3 gap-1.5">
-              <button type="button" onclick="setSubTab('shelters','campaigns')" class="neko-btn py-1.5 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[9px]">Campañas ${cN ? `<span class="action-tag-notif">${cN}</span>` : ''}</button>
-              <button type="button" onclick="setSubTab('shelters','supplies')" class="neko-btn py-1.5 bg-amber-300 text-[#2B1B10] font-bold text-[9px]">Insumos ${sN ? `<span class="action-tag-notif">${sN}</span>` : ''}</button>
-              <button type="button" onclick="openP2PVerifyModal('shelter','${s.id}')" class="neko-btn py-1.5 bg-emerald-300 text-[#2B1B10] font-bold text-[9px]">⭐ Opinar (${s.expCount || 0})</button>
+            <!-- GRIGLIA SIMMETRICA A 4 BOTTONI IDENTICA ALLE CLINICHE -->
+            <div class="grid grid-cols-4 gap-1">
+              <button type="button" onclick="setSubTab('shelters','campaigns')" class="neko-btn py-1.5 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[8.5px]">Campañas ${cN ? `<span class="action-tag-notif">${cN}</span>` : ''}</button>
+              <button type="button" onclick="setSubTab('shelters','supplies')" class="neko-btn py-1.5 bg-amber-300 text-[#2B1B10] font-bold text-[8.5px]">Insumos ${sN ? `<span class="action-tag-notif">${sN}</span>` : ''}</button>
+              <button type="button" onclick="switchMainTab('adopt'); setAdoptSectionFilter('shelter')" class="neko-btn py-1.5 bg-sky-300 text-[#2B1B10] font-bold text-[8.5px]">Adopción ➔</button>
+              <button type="button" onclick="openP2PVerifyModal('shelter','${s.id}')" class="neko-btn py-1.5 bg-emerald-300 text-[#2B1B10] font-bold text-[8.5px]">⭐ Opinar</button>
             </div>
           </div>`;
       }).join('');
@@ -2438,13 +2714,13 @@
           <div id="entity-card-${c.id}" class="neko-card p-3 space-y-2 text-[11px] ${isGrey ? 'border-dashed' : ''}">
             <div class="flex justify-between items-start gap-1.5">
               <div>
-                <span class="px-2 py-0.5 rounded-full ${isGrey ? 'bg-stone-300' : 'bg-emerald-200'} text-[#2B1B10] font-neko font-bold text-[8px]">${isGrey ? `⚪ Por confirmar (${c.paScore || 1}/6 PA)` : '🏥 Clínica Verificada en Mérida'}</span>
+                <span class="px-2 py-0.5 rounded-full ${isGrey ? 'bg-stone-300' : 'bg-emerald-200'} text-[#2B1B10] font-neko font-bold text-[8px]">${isGrey ? `⚪ Por confirmar (${c.paScore || 1}/6 PA)` : '🏥 Clínica Verificada (10 PA)'}</span>
                 <h3 class="font-neko font-bold text-[12.5px] mt-0.5">${c.name}</h3>
                 <p class="text-[10px] font-bold opacity-80">${c.zone}</p>
               </div>
               <div class="flex items-center gap-1 shrink-0">
                 <button type="button" onclick="openSocialPosterGenerator('CLÍNICA FELINA','${c.name.replace(/'/g, '')}','${c.zone} • ${c.hours}','Servicios: ${c.services.join(', ')}','Tel: ${c.phone} • Reputación: ${repPts}/1000')" class="neko-btn px-2 py-0.5 bg-sky-300 text-[#2B1B10] font-bold text-[8.5px]">Compartir</button>
-                <button type="button" onclick="openReportInappropriateModal('clinic','${c.id}','${c.name.replace(/'/g, '')}',${c.lat},${c.lng})" class="neko-btn px-1.5 py-0.5 bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>
+                ${isGrey ? `<button type="button" onclick="openReportInappropriateModal('clinic','${c.id}','${c.name.replace(/'/g, '')}',${c.lat},${c.lng})" class="neko-btn px-1.5 py-0.5 bg-rose-200 text-rose-950 font-bold text-[8px]">🚩</button>` : ''}
                 ${isAdmin ? `<button type="button" onclick="adminRemoveAnyElement('clinic','${c.id}','${c.name.replace(/'/g, '')}')" class="neko-btn px-1.5 py-0.5 bg-purple-300 text-[#2B1B10] font-bold text-[8px]">👑</button>` : ''}
               </div>
             </div>
@@ -2460,8 +2736,8 @@
               </div>
               <div class="w-full h-2.5 rounded-full bg-stone-300 border border-[#2B1B10] overflow-hidden"><div class="${repPts >= 500 ? 'bg-emerald-500' : 'bg-amber-500'} h-full neko-prog-fill" style="width:${barPct}%"></div></div>
             </div>
-            <!-- AGGIUNTO IL TASTO "IR A ADOPCIÓN" SULLE CLINICHE ACCANTO A CAMPAGNE, INSUMOS E OPINAR -->
             ${isGrey ? `<div class="grid grid-cols-${isClinicOrAdmin ? '2' : '1'} gap-1.5"><button type="button" onclick="openP2PVerifyModal('clinic','${c.id}')" class="neko-btn py-1.5 bg-amber-400 text-[#2B1B10] font-bold text-[9.5px]">Confirmar Clínica <span class="action-tag-notif">1</span></button>${isClinicOrAdmin ? `<button type="button" onclick="claimGreyClinicOfficial('${c.id}')" class="neko-btn py-1.5 bg-emerald-400 text-[#2B1B10] font-bold text-[9.5px]">Vincular Clínica</button>` : ''}</div>` : `
+            <!-- GRIGLIA SIMMETRICA A 4 BOTTONI IDENTICA AI RIFUGI -->
             <div class="grid grid-cols-4 gap-1">
               <button type="button" onclick="setSubTab('clinics','campaigns')" class="neko-btn py-1.5 bg-[var(--pill-idle)] text-[var(--text-main)] font-bold text-[8.5px]">Campañas ${cN ? `<span class="action-tag-notif">${cN}</span>` : ''}</button>
               <button type="button" onclick="setSubTab('clinics','supplies')" class="neko-btn py-1.5 bg-amber-300 text-[#2B1B10] font-bold text-[8.5px]">Insumos ${sN ? `<span class="action-tag-notif">${sN}</span>` : ''}</button>
@@ -2477,8 +2753,8 @@
     function renderCampaignsList(targetType) {
       const canConfirm = state.session.role === targetType || state.session.role === 'admin';
       const isAdmin = state.session.role === 'admin';
-      const list = state.campaigns.filter(c => c.origin !== 'volunteer' && c.targetType === targetType);
-      const topBtn = canConfirm ? `<button type="button" onclick="openVolunteerPublishModal('campaigns','${targetType}')" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">+ Crear Campaña Institucional de ${targetType === 'clinic' ? 'Clínica' : 'Refugio'}</button>` : `<div class="p-2 rounded-xl bg-amber-100 border border-[#2B1B10] text-[9.5px] font-bold text-center">💡 Las campañas de voluntarios independientes se encuentran en la sección 🚨 SOS ➔ Voluntarios</div>`;
+      const list = state.campaigns.filter(isItemVisibleToCurrentUser).filter(c => c.origin !== 'volunteer' && c.targetType === targetType);
+      const topBtn = canConfirm ? `<button type="button" onclick="openVolunteerPublishModal('campaigns','${targetType}')" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">+ Crear Campaña Institucional de ${targetType === 'clinic' ? 'Clínica' : 'Refugio'} (Sin Límite)</button>` : `<div class="p-2 rounded-xl bg-amber-100 border border-[#2B1B10] text-[9.5px] font-bold text-center">💡 Las campañas de voluntarios independientes se encuentran en la sección 🚨 SOS ➔ Voluntarios</div>`;
       if (!list.length) return topBtn + `<div class="neko-card p-4 text-center text-[11px] opacity-85">Aún no hay campañas institucionales activas en esta sección.</div>`;
       return topBtn + list.map(c => {
         const pct = Math.min(100, Math.round((c.raisedMxn / c.targetMxn) * 100)), paused = c.raisedMxn >= c.targetMxn;
@@ -2505,7 +2781,7 @@
     function renderGroupedSuppliesByEntity(targetType) {
       const canAdd = state.session.role === targetType || state.session.role === 'admin';
       const addBtn = canAdd ? `<button type="button" onclick="openAddSupplyModal('${targetType}')" class="w-full neko-btn py-2 bg-amber-300 text-[#2B1B10] font-bold text-xs">+ Añadir Insumo Institucional</button>` : '';
-      const activeSups = state.supplies.filter(s => s.origin !== 'volunteer' && s.targetType === targetType && !s.fulfilled);
+      const activeSups = state.supplies.filter(isItemVisibleToCurrentUser).filter(s => s.origin !== 'volunteer' && s.targetType === targetType && !s.fulfilled);
       if (!activeSups.length) return addBtn + `<div class="neko-card p-4 text-center text-[11px] opacity-85">No hay listas de insumos institucionales pendientes en este momento.</div>`;
       return addBtn + activeSups.map(s => `
         <div class="neko-card p-2.5 space-y-1.5 text-[11px]">
@@ -2536,18 +2812,23 @@
     function submitNewSupply(ev, targetType) {
       ev.preventDefault();
       const isVol = targetType === 'volunteer' || state.session.role === 'volunteer';
-      state.supplies.unshift({ id: 'sup-' + Date.now(), origin: isVol ? 'volunteer' : 'entity', targetType: isVol ? 'volunteer' : targetType, entityId: state.session.entityId || 'afad', entityName: state.session.label, storeName: 'Amazon MX', title: document.getElementById('sup-new-title').value.trim(), sub: document.getElementById('sup-new-sub').value.trim(), url: 'https://www.amazon.com.mx/s?k=alimento+gato', fulfilled: false, pendingConfirm: false });
+      const supObj = { id: 'sup-' + Date.now(), origin: isVol ? 'volunteer' : 'entity', targetType: isVol ? 'volunteer' : targetType, entityId: state.session.entityId || 'afad', entityName: state.session.label, storeName: 'Amazon MX', title: document.getElementById('sup-new-title').value.trim(), sub: document.getElementById('sup-new-sub').value.trim(), url: 'https://www.amazon.com.mx/s?k=alimento+gato', fulfilled: false, pendingConfirm: false };
+      state.supplies.unshift(supObj);
+      pushDocumentToFirestoreCollection('supplies', supObj.id, supObj);
       closeCenterModal(); renderAll(); notify('Insumo publicado.');
     }
 
     function notifySupplyPurchaseToEntity(id) {
       const s = state.supplies.find(x => x.id === id); if (!s) return;
-      window.open(s.url, '_blank', 'noopener'); s.pendingConfirm = true; renderAll();
+      window.open(s.url, '_blank', 'noopener'); s.pendingConfirm = true;
+      pushDocumentToFirestoreCollection('supplies', s.id, s);
+      renderAll();
     }
 
     function confirmSupplyReceivedByEntity(id) {
       const s = state.supplies.find(x => x.id === id); if (!s) return;
       s.fulfilled = true; s.pendingConfirm = false; state.karma += 60;
+      pushDocumentToFirestoreCollection('supplies', s.id, s);
       syncVolunteerAuthorityFromKarma();
       renderAll(); animateKarmaExpBar(); launchNekoCelebration();
       notify('Recepción de insumo confirmada (+60 EXP).');
@@ -2556,6 +2837,7 @@
     function confirmCampaignSpeiByEntity(campId) {
       const c = state.campaigns.find(x => x.id === campId); if (!c || !c.pendingMxn) return;
       c.raisedMxn = Math.min(c.targetMxn, c.raisedMxn + c.pendingMxn); c.pendingMxn = 0; state.karma += 100;
+      pushDocumentToFirestoreCollection('campaigns', c.id, c);
       syncVolunteerAuthorityFromKarma();
       renderAll(); animateKarmaExpBar(); launchNekoCelebration();
     }
@@ -2595,14 +2877,13 @@
     function submitSpeiDonation(ev, campId) {
       ev.preventDefault();
       const c = state.campaigns.find(x => x.id === campId), amt = parseInt(document.getElementById('spei-amt').value, 10) || 200;
-      if (c) c.pendingMxn = (c.pendingMxn || 0) + amt;
+      if (c) {
+        c.pendingMxn = (c.pendingMxn || 0) + amt;
+        pushDocumentToFirestoreCollection('campaigns', c.id, c);
+      }
       closeCenterModal(); renderAll(); notify(`Aviso de +$${amt} MXN enviado.`);
     }
 
-    /* =========================================================================
-       OPINAR Y CONFIRMAR (CLÍNICAS, REFUGIOS Y PINES EN BASE 1000 CON VOTO + / -
-       RESERVADO A VOLUNTARIOS Y MULTIPLICADO POR SU AUTORIDAD PA)
-       ========================================================================= */
     function openP2PVerifyModal(targetKind, id) {
       const isEntity = targetKind === 'clinic' || targetKind === 'shelter';
       const item = targetKind === 'clinic' ? state.clinics.find(c => c.id === id) : (targetKind === 'shelter' ? state.shelters.find(s => s.id === id) : state.streetItems.find(i => i.id === id));
@@ -2632,13 +2913,13 @@
           <form onsubmit="submitP2PVerification(event,'${targetKind}','${id}')" class="space-y-2 text-[11px]">
             <div class="p-2 rounded-xl bg-amber-100 border border-[#2B1B10] flex items-center justify-between text-[9.5px]">
               <span>Reputación actual: <strong>${repPts} / 1000 pts</strong></span>
-              <span class="font-bold text-emerald-900">Tu multiplicador: ×${volPa} PA</span>
+              <span class="font-bold text-emerald-900">Tu multiplicador: ×${volPa} PA (Máx Vol: 5 PA)</span>
             </div>
             <div class="p-2.5 neko-subcard space-y-1.5">
               <p class="font-neko font-bold text-[10px]">1. Sentido de tu opinión ciudadana:</p>
               <label class="flex items-center gap-1.5 cursor-pointer font-bold text-emerald-800">
                 <input type="radio" name="ent_vote_dir" value="pos" checked onchange="document.getElementById('neg-reason-box').classList.add('hidden');document.getElementById('pos-criteria-box').classList.remove('hidden')" />
-                <span>👍 Opinión Positiva (+${12 * volPa} a +${16 * volPa} pts)</span>
+                <span>👍 Opinión Positiva (+${10 * volPa} a +${14 * volPa} pts)</span>
               </label>
               <label class="flex items-center gap-1.5 cursor-pointer font-bold text-rose-800">
                 <input type="radio" name="ent_vote_dir" value="neg" onchange="document.getElementById('neg-reason-box').classList.remove('hidden');document.getElementById('pos-criteria-box').classList.add('hidden')" />
@@ -2719,6 +3000,7 @@
       const item = state.streetItems.find(x => x.id === pinId); if (!item) return;
       NekoSFX.tap();
       state.streetItems = state.streetItems.filter(x => x.id !== pinId);
+      deleteDocumentFromFirestoreCollection('pins', pinId);
       closeCenterModal(); closeMapPinCard(); renderAll();
       notify('🗑️ Tu reporte fue eliminado del mapa correctamente.');
     }
@@ -2741,6 +3023,7 @@
 
       if (item.closeFlags >= 3) {
         state.streetItems = state.streetItems.filter(x => x.id !== pinId);
+        deleteDocumentFromFirestoreCollection('pins', pinId);
         closeCenterModal(); closeMapPinCard(); renderAll();
         notify('Pin retirado tras 3 confirmaciones comunitarias distintas hoy.');
       } else {
@@ -2854,19 +3137,20 @@
       syncVolunteerAuthorityFromKarma();
       openCenterModal(`
         <div class="flex justify-between items-center border-b pb-1.5">
-          <h3 class="font-neko font-bold text-xs">Fórmula de Autoridad (PA) y Nivel EXP</h3>
+          <h3 class="font-neko font-bold text-xs">Niveles (1–100) y Jerarquía de Autoridad (PA)</h3>
           <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
         </div>
         <div class="space-y-1.5 text-[10.5px]">
           <p>Perfil activo: <strong>${state.session.label}</strong> (${state.karma} EXP • Peso actual: <strong>${state.session.paWeight} PA</strong>).</p>
           <div class="p-2 neko-subcard space-y-1 text-[9.5px]">
-            <p class="font-bold">Escala Automática para Voluntarios:</p>
-            <p>• 0 – 249 EXP ➔ <strong>1 PA</strong> (Guardián Inicial)</p>
-            <p>• 250 – 999 EXP ➔ <strong>2 PA</strong> (Voluntario Activo)</p>
-            <p>• 1,000 – 2,249 EXP ➔ <strong>3 PA</strong> (Rescatista TNR)</p>
-            <p>• 2,250 – 3,999 EXP ➔ <strong>4 PA</strong> (Veterano Alta Autoridad)</p>
-            <p>• 4,000+ EXP ➔ <strong>5 PA</strong> (Maestro Cívico Felino)</p>
-            <p>• Clínicas y Refugios Verificados ➔ <strong>6 PA</strong> (Máximo Institucional)</p>
+            <p class="font-bold">Escala de Voluntarios (Nivel 1 al 100 • Máximo 5 PA):</p>
+            <p>• Niveles 1 – 20 ➔ <strong>1 PA</strong> (Guardián Inicial)</p>
+            <p>• Niveles 21 – 40 ➔ <strong>2 PA</strong> (Voluntario Activo)</p>
+            <p>• Niveles 41 – 60 ➔ <strong>3 PA</strong> (Rescatista TNR)</p>
+            <p>• Niveles 61 – 80 ➔ <strong>4 PA</strong> (Veterano Felino)</p>
+            <p>• Niveles 81 – 100 ➔ <strong>5 PA</strong> (Maestro Cívico — Tope Voluntario)</p>
+            <p class="pt-1 border-t border-current/20">• <strong>Clínicas y Refugios Verificados ➔ 10 PA Fijos</strong> (Siempre superiores para proteger el orden institucional)</p>
+            <p>• <strong>Administrador General ➔ 50 PA</strong></p>
           </div>
         </div>`);
     }
@@ -2874,7 +3158,7 @@
     function claimGreyClinicOfficial(id) {
       const cl = state.clinics.find(c => c.id === id);
       if (cl) {
-        cl.confirmed = true; cl.appMember = true; cl.paScore = 6;
+        cl.confirmed = true; cl.appMember = true; cl.paScore = 10;
         if (!cl.reputationPts) cl.reputationPts = 500;
         renderAll(); launchNekoCelebration();
       }
@@ -2882,7 +3166,7 @@
     function setRolePin(code) {
       if (ROLE_PINS[code]) {
         NekoSFX.tap();
-        state.session = { ...ROLE_PINS[code], email: state.session.email || 'voluntario@mishimaya.mx', phone: state.session.phone || '', age: state.session.age || 25 };
+        state.session = { ...ROLE_PINS[code], email: state.session.email || 'voluntario@mishimaya.mx', phone: state.session.phone || '', age: state.session.age || 25, quizMinPa: state.session.quizMinPa || 1 };
         syncVolunteerAuthorityFromKarma();
         toggleRightDrawer(false); closeMapPinCard(); renderAll();
       }
@@ -2932,6 +3216,11 @@
       if (sl) sl.value = NekoSFX.enabled ? (state.sfxVolume !== undefined ? state.sfxVolume : 80) : 0;
       if (lbl) lbl.textContent = (NekoSFX.enabled ? (state.sfxVolume !== undefined ? state.sfxVolume : 80) : 0) + '%';
 
+      const prefs = state.notifPrefs || { sosRadius: true, followedPins: true, cityBroadcast: true };
+      const pSos = document.getElementById('notif-pref-sos'); if (pSos) pSos.checked = prefs.sosRadius !== false;
+      const pFol = document.getElementById('notif-pref-followed'); if (pFol) pFol.checked = prefs.followedPins !== false;
+      const pBrd = document.getElementById('notif-pref-broadcast'); if (pBrd) pBrd.checked = prefs.cityBroadcast !== false;
+
       document.getElementById('apk-shell').setAttribute('data-theme', state.theme);
       document.getElementById('top-cat-icon').innerHTML = catAvatarSvg(state.theme);
       document.getElementById('top-karma-val').textContent = state.karma.toLocaleString('en-US');
@@ -2954,7 +3243,14 @@
       renderAll(true);
       animateKarmaExpBar();
       centerOnUserGPS(false);
-      if (!state.registered) setTimeout(() => openAuthAndOnboardingModal('volunteer'), 350);
+      // Deep Linking per aprire un Pin specifico condiviso via link (?pin=ID)
+      const urlParams = new URLSearchParams(window.location.search);
+      const sharedPinId = urlParams.get('pin');
+      if (sharedPinId) {
+        setTimeout(() => showPinCardOverlay('street', sharedPinId), 500);
+      } else if (!state.registered) {
+        setTimeout(() => openAuthAndOnboardingModal('volunteer'), 350);
+      }
     });
   </script>
 </body>
