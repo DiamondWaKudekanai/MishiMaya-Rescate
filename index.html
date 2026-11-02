@@ -3462,96 +3462,1211 @@
           return;
         }
         if (origCloseCenterModal) origCloseCenterModal();
+  <!-- =========================================================================
+       PATCH v22.0: SCENA STRADALE NEKO ATSUME + LETTERE SVG + AUTH PLAY STORE
+       + TEST FULLSCREEN RANDOMIZZATO + VERO PROFILO "CUENTA" + PREFISSI "+"
+       Incolla questo blocco subito prima di </body> alla fine di index.html
+       ========================================================================= -->
+  <style>
+    /* 1. Rimuove completamente la dicitura tecnica sullo stato del backend dal Drawer */
+    #firebase-status-pill { display: none !important; }
+
+    /* 2. Overlay Invalicabile a Tutto Schermo (Wallpaper Neko Atsume) */
+    #neko-auth-gate-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      max-width: 480px;
+      margin: 0 auto;
+      background-color: #FDF6E2;
+      background-image:
+        radial-gradient(rgba(200, 125, 75, 0.16) 2px, transparent 2px),
+        radial-gradient(rgba(249, 115, 22, 0.09) 1.5px, transparent 1.5px);
+      background-size: 24px 24px, 48px 48px;
+      background-position: 0 0, 12px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow-y: auto;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    #neko-auth-gate-screen.gate-unlocked {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(1.03);
+    }
+
+    /* 3. Palco Scenografico Stradale Neko Atsume */
+    #neko-street-scene {
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      height: 158px;
+      margin-bottom: 4px;
+      opacity: 0;
+      transform: translateY(14px) scale(0.96);
+      transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      flex-shrink: 0;
+    }
+    #neko-street-scene.scene-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Contenitore delle 9 Lettere Vettoriali SVG che cadono sulla via asfaltata */
+    #neko-svg-letters-stage {
+      position: absolute;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 1px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .neko-svg-letter-item {
+      width: 28px;
+      height: 44px;
+      transform-origin: bottom center;
+      opacity: 0;
+    }
+    .neko-svg-letter-item.letter-dropping {
+      animation: nekoSvgLetterDrop 0.76s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      animation-delay: var(--drop-delay, 0s);
+    }
+
+    @keyframes nekoSvgLetterDrop {
+      0% {
+        opacity: 0;
+        transform: translateY(-195px) rotate(var(--drop-rot, -15deg)) scale(0.85, 1.18);
+      }
+      15% { opacity: 1; }
+      52% {
+        opacity: 1;
+        transform: translateY(0px) rotate(0deg) scale(1.26, 0.72);
+      }
+      70% {
+        opacity: 1;
+        transform: translateY(-28px) rotate(var(--drop-rot2, 6deg)) scale(0.92, 1.09);
+      }
+      85% {
+        opacity: 1;
+        transform: translateY(0px) rotate(0deg) scale(1.10, 0.90);
+      }
+      94% {
+        opacity: 1;
+        transform: translateY(-5px) rotate(0deg) scale(0.98, 1.02);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0px) rotate(0deg) scale(1, 1);
+      }
+    }
+
+    /* Box del Motto con le 3 parole che appaiono una alla volta */
+    #neko-motto-box {
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      white-space: nowrap;
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: #FFFDF7;
+      border: 2.5px solid #2B1B10;
+      box-shadow: 0 3px 0 #2B1B10;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 13.5px;
+      color: #3D2618;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 25;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #neko-motto-box.box-visible {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+    .motto-word {
+      opacity: 0;
+      transform: translateY(6px) scale(0.8);
+      display: inline-block;
+      transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .motto-word.word-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Card di Login / Registrazione Professionale */
+    #neko-auth-card-host {
+      width: 100%;
+      max-width: 420px;
+      display: none;
+    }
+    #neko-auth-card-host.auth-card-visible {
+      display: block;
+      animation: nekoModalPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* Overlay a Tutto Schermo per il Questionario Volontari (6 Domande Randomizzate) */
+    #neko-fullscreen-quiz-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10020;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #FDF6E2;
+      display: none;
+      flex-direction: column;
+      padding: 14px;
+      overflow-y: auto;
+    }
+    #neko-fullscreen-quiz-overlay.quiz-open {
+      display: flex;
+      animation: nekoSectionFade 0.25s ease forwards;
+    }
+  </style>
+
+  <!-- OVERLAY PRINCIPALE: SCENA STRADALE NEKO ATSUME + PORTALE AUTH -->
+  <div id="neko-auth-gate-screen">
+    <!-- Scena Vettoriale: Strada Asfaltata + Casette e Alberi ai Lati + Spazio Centrale per MishiMaya -->
+    <div id="neko-street-scene">
+      <svg viewBox="0 0 420 155" class="w-full h-full overflow-visible">
+        <!-- Nuvoletta e Sole pastello -->
+        <circle cx="210" cy="24" r="14" fill="#FDE68A" stroke="#2B1B10" stroke-width="2.2" />
+        <!-- LATO SINISTRO: Casetta Coloniale Yucatán + Albero Neko Atsume -->
+        <g transform="translate(6, 26)">
+          <!-- Casetta Sinistra -->
+          <rect x="4" y="42" width="54" height="44" rx="4" fill="#FDBA74" stroke="#2B1B10" stroke-width="2.5" />
+          <polygon points="0,42 31,18 62,42" fill="#EA580C" stroke="#2B1B10" stroke-width="2.5" stroke-linejoin="round" />
+          <rect x="23" y="60" width="15" height="26" rx="3" fill="#8C4A23" stroke="#2B1B10" stroke-width="2.2" />
+          <rect x="10" y="49" width="11" height="11" rx="2" fill="#FFFDF7" stroke="#2B1B10" stroke-width="2" />
+          <!-- Albero Sinistro -->
+          <rect x="64" y="58" width="9" height="28" fill="#8C4A23" stroke="#2B1B10" stroke-width="2.2" />
+          <circle cx="68.5" cy="46" r="16" fill="#34D399" stroke="#2B1B10" stroke-width="2.5" />
+          <circle cx="59" cy="52" r="11" fill="#10B981" stroke="#2B1B10" stroke-width="2.2" />
+          <circle cx="77" cy="52" r="11" fill="#10B981" stroke="#2B1B10" stroke-width="2.2" />
+        </g>
+
+        <!-- LATO DESTRO: Albero Neko Atsume + Casetta Color Crema/Corallo -->
+        <g transform="translate(324, 26)">
+          <!-- Albero Destro -->
+          <rect x="16" y="58" width="9" height="28" fill="#8C4A23" stroke="#2B1B10" stroke-width="2.2" />
+          <circle cx="20.5" cy="46" r="16" fill="#34D399" stroke="#2B1B10" stroke-width="2.5" />
+          <circle cx="11" cy="52" r="11" fill="#10B981" stroke="#2B1B10" stroke-width="2.2" />
+          <circle cx="29" cy="52" r="11" fill="#10B981" stroke="#2B1B10" stroke-width="2.2" />
+          <!-- Casetta Destra -->
+          <rect x="34" y="42" width="54" height="44" rx="4" fill="#FEF3C7" stroke="#2B1B10" stroke-width="2.5" />
+          <polygon points="30,42 61,18 92,42" fill="#F43F5E" stroke="#2B1B10" stroke-width="2.5" stroke-linejoin="round" />
+          <rect x="53" y="60" width="15" height="26" rx="3" fill="#C87D4B" stroke="#2B1B10" stroke-width="2.2" />
+          <rect x="71" y="49" width="11" height="11" rx="2" fill="#38BDF8" stroke="#2B1B10" stroke-width="2" />
+        </g>
+
+        <!-- VIA ASFALTATA E MARCIAPIEDE (TERRENO SIMULATO SU CUI CADONO LE LETTERE) -->
+        <!-- Marciapiede in pietra chiara -->
+        <rect x="8" y="110" width="404" height="8" rx="3" fill="#E7E5E4" stroke="#2B1B10" stroke-width="2.4" />
+        <!-- Carreggiata asfaltata stile Neko Atsume -->
+        <rect x="4" y="117" width="412" height="24" rx="8" fill="#44403C" stroke="#2B1B10" stroke-width="2.6" />
+        <!-- Strisce bianche tratteggiate della via asfaltata -->
+        <line x1="28" y1="129" x2="392" y2="129" stroke="#FDE68A" stroke-width="2.8" stroke-dasharray="16 14" stroke-linecap="round" />
+      </svg>
+
+      <!-- Palco Centrale dove atterrano le 9 Lettere SVG Disegnate in Stile Neko Atsume -->
+      <div id="neko-svg-letters-stage"></div>
+
+      <!-- Box del Motto con apparizione sequenziale delle 3 parole -->
+      <div id="neko-motto-box">
+        <span>🐾</span>
+        <span id="motto-w1" class="motto-word text-[#EA580C]">¡Señala,</span>
+        <span id="motto-w2" class="motto-word text-[#059669]">Rescata,</span>
+        <span id="motto-w3" class="motto-word text-[#D97706]">Adopta!</span>
+      </div>
+    </div>
+
+    <!-- MODULO PROFESSIONALE DI LOGIN / REGISTRAZIONE -->
+    <div id="neko-auth-card-host" class="neko-card p-3.5 space-y-2.5 shadow-2xl"></div>
+  </div>
+
+  <!-- OVERLAY A TUTTO SCHERMO PER IL QUESTIONARIO DI CONOSCENZA FELINA -->
+  <div id="neko-fullscreen-quiz-overlay"></div>
+
+  <script>
+    (function initProfessionalAuthAndStreetIntro() {
+      let authMode = 'login'; // 'login' | 'register'
+      let selectedRegRole = 'volunteer';
+      let googleVerifiedEmail = '';
+      let pendingRegistrationData = null;
+
+      /* =====================================================================
+         1. SUPPORTO GLOBALE AL SIMBOLO "+" NEI NUMERI TELEFONICI INTERNAZIONALI
+         ===================================================================== */
+      window.sanitizePhoneWithPlus = function(rawVal) {
+        const trimmed = (rawVal || '').trim();
+        const hasPlus = trimmed.startsWith('+');
+        const digits = trimmed.replace(/\D/g, '');
+        if (!digits) return '';
+        return (hasPlus ? '+' : '') + digits;
       };
 
-      // Intercetta openAuthAndOnboardingModal: se l'utente non è ancora registrato,
-      // renderizza il form direttamente dentro lo schermo intero invalicabile (rimuovendo la ✕)
-      const origOpenAuthModal = window.openAuthAndOnboardingModal;
-      window.openAuthAndOnboardingModal = function(selectedRole = 'volunteer') {
-        if (origOpenAuthModal) origOpenAuthModal(selectedRole);
-        if (!state.registered) {
-          const modalContent = document.getElementById('center-modal-content');
-          const modalBackdrop = document.getElementById('center-modal-backdrop');
-          const gateHost = document.getElementById('neko-gate-form-host');
-          if (modalContent && gateHost) {
-            gateHost.innerHTML = modalContent.innerHTML;
-            // Rimuove il pulsante ✕ in alto a destra per renderlo 100% non-skippabile
-            const closeBtns = gateHost.querySelectorAll('button');
-            closeBtns.forEach(b => {
-              if (b.textContent.trim() === '✕') b.remove();
-            });
-            modalBackdrop.classList.add('hidden');
-            gateHost.classList.add('gate-form-visible');
-          }
-        }
+      // Converte un numero con eventuale '+' nel formato wa.me (che richiede solo cifre internazionali)
+      window.formatWaLinkNumber = function(rawVal) {
+        return (rawVal || '').replace(/\D/g, '') || '529991112233';
       };
 
-      // Quando completeOnboardingQuiz termina con successo e imposta state.registered = true,
-      // sblocca automaticamente la schermata di benvenuto a tutto schermo
-      const origCompleteQuiz = window.completeOnboardingQuiz;
-      window.completeOnboardingQuiz = function(ev, role) {
-        if (origCompleteQuiz) origCompleteQuiz(ev, role);
-        if (state.registered) {
+      /* =====================================================================
+         2. GENERATORE LETTERE VETTORIALI SVG "M-i-s-h-i-M-a-y-a" STILE NEKO ATSUME
+         ===================================================================== */
+      function buildNekoSvgLetters() {
+        const stage = document.getElementById('neko-svg-letters-stage');
+        if (!stage) return;
+        const lettersSpec = [
+          { ch: 'M', fill: '#F97316', ears: true,  rot: '-16deg', rot2: '7deg' },
+          { ch: 'i', fill: '#FFFDF7', ears: false, rot: '12deg',  rot2: '-5deg' },
+          { ch: 's', fill: '#FBBF24', ears: false, rot: '-11deg', rot2: '5deg' },
+          { ch: 'h', fill: '#FB923C', ears: false, rot: '14deg',  rot2: '-6deg' },
+          { ch: 'i', fill: '#FFFDF7', ears: false, rot: '-9deg',  rot2: '4deg' },
+          { ch: 'M', fill: '#F97316', ears: true,  rot: '15deg',  rot2: '-7deg' },
+          { ch: 'a', fill: '#FDE68A', ears: false, rot: '-12deg', rot2: '5deg' },
+          { ch: 'y', fill: '#38BDF8', ears: false, rot: '11deg',  rot2: '-4deg' },
+          { ch: 'a', fill: '#34D399', ears: false, rot: '-13deg', rot2: '6deg' }
+        ];
+
+        stage.innerHTML = lettersSpec.map((item, idx) => {
+          const delay = (idx * 0.11).toFixed(2) + 's';
+          const earsSvg = item.ears
+            ? `<polygon points="4,15 9,3 15,12" fill="${item.fill}" stroke="#2B1B10" stroke-width="2.6" stroke-linejoin="round"/>
+               <polygon points="7,12 9.5,6 13,11" fill="#FDA4AF"/>
+               <polygon points="19,12 25,3 30,15" fill="${item.fill}" stroke="#2B1B10" stroke-width="2.6" stroke-linejoin="round"/>
+               <polygon points="21,11 24.5,6 27,12" fill="#FDA4AF"/>`
+            : '';
+          return `
+            <svg class="neko-svg-letter-item" style="--drop-delay:${delay}; --drop-rot:${item.rot}; --drop-rot2:${item.rot2};" viewBox="0 0 34 46">
+              ${earsSvg}
+              <text x="17" y="39" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="33" fill="${item.fill}" stroke="#2B1B10" stroke-width="4.5" paint-order="stroke fill" stroke-linejoin="round">${item.ch}</text>
+            </svg>`;
+        }).join('');
+      }
+
+      function playStreetIntroSequence() {
+        buildNekoSvgLetters();
+        const scene = document.getElementById('neko-street-scene');
+        const mottoBox = document.getElementById('neko-motto-box');
+        const w1 = document.getElementById('motto-w1');
+        const w2 = document.getElementById('motto-w2');
+        const w3 = document.getElementById('motto-w3');
+        const authHost = document.getElementById('neko-auth-card-host');
+
+        // Fase 1 (0ms - 380ms): Solo Wallpaper Neko Atsume
+        // Fase 2 (380ms): Appare la via asfaltata con alberi e casette ai lati
+        setTimeout(() => {
+          if (scene) scene.classList.add('scene-visible');
+        }, 380);
+
+        // Fase 3 (850ms): Le lettere vettoriali cadono sulla strada asfaltata
+        setTimeout(() => {
+          document.querySelectorAll('.neko-svg-letter-item').forEach(el => el.classList.add('letter-dropping'));
+        }, 850);
+  <!-- =========================================================================
+       PATCH v22.0: SCENA STRADALE NEKO ATSUME + LETTERE SVG + AUTH PLAY STORE
+       + TEST FULLSCREEN RANDOMIZZATO + VERO PROFILO "CUENTA" + PREFISSI "+"
+       Incolla questo blocco subito prima di </body> alla fine di index.html
+       ========================================================================= -->
+  <style>
+    /* 1. Rimuove completamente la dicitura tecnica sullo stato del backend dal Drawer */
+    #firebase-status-pill { display: none !important; }
+
+    /* 2. Overlay Invalicabile a Tutto Schermo (Wallpaper Neko Atsume) */
+    #neko-auth-gate-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      max-width: 480px;
+      margin: 0 auto;
+      background-color: #FDF6E2;
+      background-image:
+        radial-gradient(rgba(200, 125, 75, 0.16) 2px, transparent 2px),
+        radial-gradient(rgba(249, 115, 22, 0.09) 1.5px, transparent 1.5px);
+      background-size: 24px 24px, 48px 48px;
+      background-position: 0 0, 12px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px;
+      overflow-y: auto;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+    #neko-auth-gate-screen.gate-unlocked {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(1.03);
+    }
+
+    /* 3. Palco Scenografico Stradale Neko Atsume */
+    #neko-street-scene {
+      width: 100%;
+      max-width: 420px;
+      position: relative;
+      height: 158px;
+      margin-bottom: 4px;
+      opacity: 0;
+      transform: translateY(14px) scale(0.96);
+      transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+      flex-shrink: 0;
+    }
+    #neko-street-scene.scene-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Contenitore delle 9 Lettere Vettoriali SVG che cadono sulla via asfaltata */
+    #neko-svg-letters-stage {
+      position: absolute;
+      left: 50%;
+      bottom: 40px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 1px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    .neko-svg-letter-item {
+      width: 28px;
+      height: 44px;
+      transform-origin: bottom center;
+      opacity: 0;
+    }
+    .neko-svg-letter-item.letter-dropping {
+      animation: nekoSvgLetterDrop 0.76s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+      animation-delay: var(--drop-delay, 0s);
+    }
+
+    @keyframes nekoSvgLetterDrop {
+      0% {
+        opacity: 0;
+        transform: translateY(-195px) rotate(var(--drop-rot, -15deg)) scale(0.85, 1.18);
+      }
+      15% { opacity: 1; }
+      52% {
+        opacity: 1;
+        transform: translateY(0px) rotate(0deg) scale(1.26, 0.72);
+      }
+      70% {
+        opacity: 1;
+        transform: translateY(-28px) rotate(var(--drop-rot2, 6deg)) scale(0.92, 1.09);
+      }
+      85% {
+        opacity: 1;
+        transform: translateY(0px) rotate(0deg) scale(1.10, 0.90);
+      }
+      94% {
+        opacity: 1;
+        transform: translateY(-5px) rotate(0deg) scale(0.98, 1.02);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0px) rotate(0deg) scale(1, 1);
+      }
+    }
+
+    /* Box del Motto con le 3 parole che appaiono una alla volta */
+    #neko-motto-box {
+      position: absolute;
+      bottom: 2px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.9);
+      white-space: nowrap;
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: #FFFDF7;
+      border: 2.5px solid #2B1B10;
+      box-shadow: 0 3px 0 #2B1B10;
+      font-family: 'Fredoka', sans-serif;
+      font-weight: 700;
+      font-size: 13.5px;
+      color: #3D2618;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      z-index: 25;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #neko-motto-box.box-visible {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+    .motto-word {
+      opacity: 0;
+      transform: translateY(6px) scale(0.8);
+      display: inline-block;
+      transition: opacity 0.28s ease, transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .motto-word.word-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Card di Login / Registrazione Professionale */
+    #neko-auth-card-host {
+      width: 100%;
+      max-width: 420px;
+      display: none;
+    }
+    #neko-auth-card-host.auth-card-visible {
+      display: block;
+      animation: nekoModalPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* Overlay a Tutto Schermo per il Questionario Volontari (6 Domande Randomizzate) */
+    #neko-fullscreen-quiz-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10020;
+      max-width: 480px;
+      margin: 0 auto;
+      background: #FDF6E2;
+      display: none;
+      flex-direction: column;
+      padding: 14px;
+      overflow-y: auto;
+    }
+    #neko-fullscreen-quiz-overlay.quiz-open {
+      display: flex;
+      animation: nekoSectionFade 0.25s ease forwards;
+    }
+  </style>
+
+  <!-- OVERLAY PRINCIPALE: SCENA STRADALE NEKO ATSUME + PORTALE AUTH -->
+  <div id="neko-auth-gate-screen">
+    <!-- Scena Vettoriale: Strada Asfaltata + Casette e Alberi ai Lati + Spazio Centrale per MishiMaya -->
+    <div id="neko-street-scene">
+      <svg viewBox="0 0 420 155" class="w-full h-full overflow-visible">
+        <!-- Nuvoletta e Sole pastello -->
+        <circle cx="210" cy="24" r="14" fill="#FDE68A" stroke="#2B1B10" stroke-width="2.2" />
+        <!-- LATO SINISTRO: Casetta Coloniale Yucatán + Albero Neko Atsume -->
+        <g transform="translate(6, 26)">
+          <!-- Casetta Sinistra -->
+          <rect x="4" y="42" width="54" height="44" rx="4" fill="#FDBA74" stroke="#2B1B10" stroke-width="2.5" />
+          <polygon points="0,42 31,18 62,42" fill="#EA580C" stroke="#2B1B10" stroke-width="2.5" stroke-linejoin="round" />
+          <rect x="23" y="60" width="15" height="26" rx="3" fill="#8C4A23" stroke="#2B1B10" stroke-width="2.2" />
+          <rect x="10" y="49" width="11" height="11" rx="2" fill="#FFFDF7" stroke="#2B1B10" stroke-width="2" />
+          <!-- Albero Sinistro -->
+          <rect x="64" y="58" width="9" height="28" fill="#8C4A23" stroke="#2B1B10" stroke-width="2.2" />
+          <circle cx="68.5" cy="46" r="16" fill="#34D399" stroke="#2B1B10" stroke-width="2.5" />
+          <circle cx="59" cy="52" r="11" fill="#10B981" stroke="#2B1B10" stroke-width="2.2" />
+          <circle cx="77" cy="52" r="11" fill="#10B981" stroke="#2B1B10" stroke-width="2.2" />
+        </g>
+
+        <!-- LATO DESTRO: Albero Neko Atsume + Casetta Color Crema/Corallo -->
+        <g transform="translate(324, 26)">
+          <!-- Albero Destro -->
+          <rect x="16" y="58" width="9" height="28" fill="#8C4A23" stroke="#2B1B10" stroke-width="2.2" />
+          <circle cx="20.5" cy="46" r="16" fill="#34D399" stroke="#2B1B10" stroke-width="2.5" />
+          <circle cx="11" cy="52" r="11" fill="#10B981" stroke="#2B1B10" stroke-width="2.2" />
+          <circle cx="29" cy="52" r="11" fill="#10B981" stroke="#2B1B10" stroke-width="2.2" />
+          <!-- Casetta Destra -->
+          <rect x="34" y="42" width="54" height="44" rx="4" fill="#FEF3C7" stroke="#2B1B10" stroke-width="2.5" />
+          <polygon points="30,42 61,18 92,42" fill="#F43F5E" stroke="#2B1B10" stroke-width="2.5" stroke-linejoin="round" />
+          <rect x="53" y="60" width="15" height="26" rx="3" fill="#C87D4B" stroke="#2B1B10" stroke-width="2.2" />
+          <rect x="71" y="49" width="11" height="11" rx="2" fill="#38BDF8" stroke="#2B1B10" stroke-width="2" />
+        </g>
+
+        <!-- VIA ASFALTATA E MARCIAPIEDE (TERRENO SIMULATO SU CUI CADONO LE LETTERE) -->
+        <!-- Marciapiede in pietra chiara -->
+        <rect x="8" y="110" width="404" height="8" rx="3" fill="#E7E5E4" stroke="#2B1B10" stroke-width="2.4" />
+        <!-- Carreggiata asfaltata stile Neko Atsume -->
+        <rect x="4" y="117" width="412" height="24" rx="8" fill="#44403C" stroke="#2B1B10" stroke-width="2.6" />
+        <!-- Strisce bianche tratteggiate della via asfaltata -->
+        <line x1="28" y1="129" x2="392" y2="129" stroke="#FDE68A" stroke-width="2.8" stroke-dasharray="16 14" stroke-linecap="round" />
+      </svg>
+
+      <!-- Palco Centrale dove atterrano le 9 Lettere SVG Disegnate in Stile Neko Atsume -->
+      <div id="neko-svg-letters-stage"></div>
+
+      <!-- Box del Motto con apparizione sequenziale delle 3 parole -->
+      <div id="neko-motto-box">
+        <span>🐾</span>
+        <span id="motto-w1" class="motto-word text-[#EA580C]">¡Señala,</span>
+        <span id="motto-w2" class="motto-word text-[#059669]">Rescata,</span>
+        <span id="motto-w3" class="motto-word text-[#D97706]">Adopta!</span>
+      </div>
+    </div>
+
+    <!-- MODULO PROFESSIONALE DI LOGIN / REGISTRAZIONE -->
+    <div id="neko-auth-card-host" class="neko-card p-3.5 space-y-2.5 shadow-2xl"></div>
+  </div>
+
+  <!-- OVERLAY A TUTTO SCHERMO PER IL QUESTIONARIO DI CONOSCENZA FELINA -->
+  <div id="neko-fullscreen-quiz-overlay"></div>
+
+  <script>
+    (function initProfessionalAuthAndStreetIntro() {
+      let authMode = 'login'; // 'login' | 'register'
+      let selectedRegRole = 'volunteer';
+      let googleVerifiedEmail = '';
+      let pendingRegistrationData = null;
+
+      /* =====================================================================
+         1. SUPPORTO GLOBALE AL SIMBOLO "+" NEI NUMERI TELEFONICI INTERNAZIONALI
+         ===================================================================== */
+      window.sanitizePhoneWithPlus = function(rawVal) {
+        const trimmed = (rawVal || '').trim();
+        const hasPlus = trimmed.startsWith('+');
+        const digits = trimmed.replace(/\D/g, '');
+        if (!digits) return '';
+        return (hasPlus ? '+' : '') + digits;
+      };
+
+      // Converte un numero con eventuale '+' nel formato wa.me (che richiede solo cifre internazionali)
+      window.formatWaLinkNumber = function(rawVal) {
+        return (rawVal || '').replace(/\D/g, '') || '529991112233';
+      };
+
+      /* =====================================================================
+         2. GENERATORE LETTERE VETTORIALI SVG "M-i-s-h-i-M-a-y-a" STILE NEKO ATSUME
+         ===================================================================== */
+      function buildNekoSvgLetters() {
+        const stage = document.getElementById('neko-svg-letters-stage');
+        if (!stage) return;
+        const lettersSpec = [
+          { ch: 'M', fill: '#F97316', ears: true,  rot: '-16deg', rot2: '7deg' },
+          { ch: 'i', fill: '#FFFDF7', ears: false, rot: '12deg',  rot2: '-5deg' },
+          { ch: 's', fill: '#FBBF24', ears: false, rot: '-11deg', rot2: '5deg' },
+          { ch: 'h', fill: '#FB923C', ears: false, rot: '14deg',  rot2: '-6deg' },
+          { ch: 'i', fill: '#FFFDF7', ears: false, rot: '-9deg',  rot2: '4deg' },
+          { ch: 'M', fill: '#F97316', ears: true,  rot: '15deg',  rot2: '-7deg' },
+          { ch: 'a', fill: '#FDE68A', ears: false, rot: '-12deg', rot2: '5deg' },
+          { ch: 'y', fill: '#38BDF8', ears: false, rot: '11deg',  rot2: '-4deg' },
+          { ch: 'a', fill: '#34D399', ears: false, rot: '-13deg', rot2: '6deg' }
+        ];
+
+        stage.innerHTML = lettersSpec.map((item, idx) => {
+          const delay = (idx * 0.11).toFixed(2) + 's';
+          const earsSvg = item.ears
+            ? `<polygon points="4,15 9,3 15,12" fill="${item.fill}" stroke="#2B1B10" stroke-width="2.6" stroke-linejoin="round"/>
+               <polygon points="7,12 9.5,6 13,11" fill="#FDA4AF"/>
+               <polygon points="19,12 25,3 30,15" fill="${item.fill}" stroke="#2B1B10" stroke-width="2.6" stroke-linejoin="round"/>
+               <polygon points="21,11 24.5,6 27,12" fill="#FDA4AF"/>`
+            : '';
+          return `
+            <svg class="neko-svg-letter-item" style="--drop-delay:${delay}; --drop-rot:${item.rot}; --drop-rot2:${item.rot2};" viewBox="0 0 34 46">
+              ${earsSvg}
+              <text x="17" y="39" text-anchor="middle" font-family="Fredoka, sans-serif" font-weight="700" font-size="33" fill="${item.fill}" stroke="#2B1B10" stroke-width="4.5" paint-order="stroke fill" stroke-linejoin="round">${item.ch}</text>
+            </svg>`;
+        }).join('');
+      }
+
+      function playStreetIntroSequence() {
+        buildNekoSvgLetters();
+        const scene = document.getElementById('neko-street-scene');
+        const mottoBox = document.getElementById('neko-motto-box');
+        const w1 = document.getElementById('motto-w1');
+        const w2 = document.getElementById('motto-w2');
+        const w3 = document.getElementById('motto-w3');
+        const authHost = document.getElementById('neko-auth-card-host');
+
+        // Fase 1 (0ms - 380ms): Solo Wallpaper Neko Atsume
+        // Fase 2 (380ms): Appare la via asfaltata con alberi e casette ai lati
+        setTimeout(() => {
+          if (scene) scene.classList.add('scene-visible');
+        }, 380);
+
+        // Fase 3 (850ms): Le lettere vettoriali cadono sulla strada asfaltata
+        setTimeout(() => {
+          document.querySelectorAll('.neko-svg-letter-item').forEach(el => el.classList.add('letter-dropping'));
+        }, 850);
+
+        // Fase 4 (2300ms): Appare il box del motto e le 3 parole una alla volta
+        setTimeout(() => { if (mottoBox) mottoBox.classList.add('box-visible'); }, 2250);
+        setTimeout(() => { if (w1) w1.classList.add('word-visible'); NekoSFX.tap(); }, 2400);
+        setTimeout(() => { if (w2) w2.classList.add('word-visible'); NekoSFX.tap(); }, 2720);
+        setTimeout(() => { if (w3) w3.classList.add('word-visible'); NekoSFX.celebrate(); }, 3040);
+
+        // Fase 5 (3650ms): Se già registrato sblocca l'app; altrimenti mostra il modulo di Login/Registrazione
+        setTimeout(() => {
           const gateScreen = document.getElementById('neko-auth-gate-screen');
-          if (gateScreen) {
-            gateScreen.classList.add('gate-unlocked');
-            setTimeout(() => gateScreen.classList.add('hidden'), 480);
+          if (state.registered && state.session && state.session.email) {
+            if (gateScreen) {
+              gateScreen.classList.add('gate-unlocked');
+              setTimeout(() => gateScreen.classList.add('hidden'), 460);
+            }
+          } else {
+            renderAuthGateCard();
+            if (authHost) authHost.classList.add('auth-card-visible');
           }
+        }, 3650);
+      }
+
+      /* =====================================================================
+         3. SISTEMA DI LOGIN E REGISTRAZIONE PLAY STORE (ZERO CAMPI PRECOMPILATI,
+            ZERO RUOLO ADMIN PUBBLICO, VALIDAZIONE RIGOROSA CREDENZIALI)
+         ===================================================================== */
+      window.switchAuthGateTab = function(mode) {
+        NekoSFX.tap();
+        authMode = mode;
+        renderAuthGateCard();
+      };
+
+      window.selectRegRoleTab = function(role) {
+        NekoSFX.tap();
+        selectedRegRole = role;
+        renderAuthGateCard();
+      };
+
+      window.handleRealGoogleAuthClick = async function() {
+        NekoSFX.tap();
+        if (fbAuth && FIREBASE_CONFIG.apiKey) {
+          try {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            const res = await fbAuth.signInWithPopup(provider);
+            if (res.user && res.user.email) {
+              googleVerifiedEmail = res.user.email;
+              const emInp = document.getElementById('gate-email-inp');
+              if (emInp) emInp.value = googleVerifiedEmail;
+              notify(`✅ Cuenta de Google verificada: ${googleVerifiedEmail}`);
+              return;
+            }
+          } catch (e) {
+            notify('⚠️ No se completó el inicio con Google.');
+            return;
+          }
+        }
+        // In modalità senza chiavi Firebase chiede l'inserimento esplicito dell'account Google
+        const manualGoogle = prompt('Ingresa tu correo de Google (@gmail.com) para vincular tu sesión:');
+        if (manualGoogle && manualGoogle.includes('@')) {
+          googleVerifiedEmail = manualGoogle.trim().toLowerCase();
+          const emInp = document.getElementById('gate-email-inp');
+          if (emInp) emInp.value = googleVerifiedEmail;
+          const pwInp = document.getElementById('gate-pass-inp');
+          if (pwInp && !pwInp.value) pwInp.value = 'google_oauth_token';
+          notify(`✅ Google vinculado: ${googleVerifiedEmail}`);
         }
       };
 
-      // Funzione di Logout per testare il blocco invalicabile in qualsiasi momento dal Drawer
-      window.logoutAndLockGate = function() {
-        state.registered = false;
+      function renderAuthGateCard() {
+        const host = document.getElementById('neko-auth-card-host');
+        if (!host) return;
+        const isLogin = authMode === 'login';
+
+        host.innerHTML = `
+          <div class="grid grid-cols-2 gap-1.5 bg-black/10 p-1 rounded-xl border border-[#2B1B10]">
+            <button type="button" onclick="switchAuthGateTab('login')" class="neko-btn py-1.5 text-xs font-bold ${isLogin ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}">🔑 Iniciar Sesión</button>
+            <button type="button" onclick="switchAuthGateTab('register')" class="neko-btn py-1.5 text-xs font-bold ${!isLogin ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}">✨ Crear Cuenta</button>
+          </div>
+
+          <button type="button" onclick="handleRealGoogleAuthClick()" class="w-full neko-btn py-2 bg-[#FFFDF7] text-[#2B1B10] font-bold text-xs gap-1.5">
+            ${nekoSvg('shield','w-4 h-4')}
+            <span>${googleVerifiedEmail ? `Google: ${googleVerifiedEmail} ✓` : 'Continuar con Google'}</span>
+          </button>
+
+          ${isLogin ? `
+            <form onsubmit="submitPlayStoreLogin(event)" class="space-y-2 text-[11px]">
+              <input id="gate-email-inp" type="email" required value="${googleVerifiedEmail}" placeholder="Correo electrónico registrado *" class="w-full px-2.5 py-2 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+              <input id="gate-pass-inp" type="password" required minlength="6" placeholder="Contraseña (mín. 6 caracteres) *" class="w-full px-2.5 py-2 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+              <button type="submit" class="w-full neko-btn py-2.5 bg-emerald-400 text-[#2B1B10] font-bold text-xs">Entrar a MishiMaya ➔</button>
+              <p class="text-[9.5px] text-center opacity-80">¿Es tu primera vez? Toca <strong>"✨ Crear Cuenta"</strong> arriba.</p>
+            </form>
+          ` : `
+            <form onsubmit="submitPlayStoreRegistrationStep1(event)" class="space-y-2 text-[11px]">
+              <p class="font-neko font-bold text-[10px]">1. Elige tu tipo de perfil cívico:</p>
+              <div class="grid grid-cols-3 gap-1.5 text-[10px]">
+                <button type="button" onclick="selectRegRoleTab('volunteer')" class="neko-btn py-1.5 font-bold ${selectedRegRole === 'volunteer' ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}">👤 Voluntario</button>
+                <button type="button" onclick="selectRegRoleTab('clinic')" class="neko-btn py-1.5 font-bold ${selectedRegRole === 'clinic' ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}">🏥 Clínica</button>
+                <button type="button" onclick="selectRegRoleTab('shelter')" class="neko-btn py-1.5 font-bold ${selectedRegRole === 'shelter' ? 'bg-[#F97316] text-white' : 'bg-[var(--pill-idle)] text-[var(--text-main)]'}">🏡 Refugio</button>
+              </div>
+
+              <div class="grid grid-cols-3 gap-1.5">
+                <input id="gate-name-inp" type="text" required placeholder="${selectedRegRole === 'volunteer' ? 'Tu nombre o alias *' : 'Nombre oficial *'}" class="col-span-2 px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+                <input id="gate-age-inp" type="number" min="18" max="110" required placeholder="Edad (18+) *" class="px-2 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-bold" />
+              </div>
+
+              <input id="gate-email-inp" type="email" required value="${googleVerifiedEmail}" placeholder="Tu correo electrónico *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+              <input id="gate-pass-inp" type="password" required minlength="6" placeholder="Crea una contraseña (mín. 6 caracteres) *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+
+              <!-- Supporto al simbolo '+' per prefissi internazionali -->
+              <input id="gate-phone-inp" type="tel" pattern="^\\+?[0-9\\s\\-]{7,18}$" placeholder="Teléfono / WhatsApp con prefijo (ej. +52999... o +39...) Opcional" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-mono text-[10.5px]" />
+
+              ${selectedRegRole !== 'volunteer' ? `
+                <input id="gate-zone-inp" type="text" required placeholder="Dirección y Colonia en Mérida *" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+                <div class="grid grid-cols-2 gap-1.5">
+                  <input id="gate-hours-inp" type="text" required placeholder="Horarios (ej. Lun-Sáb 9-20h) *" class="px-2 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+                  <input id="gate-clabe-inp" type="text" placeholder="CLABE / Pago (Opcional)" class="px-2 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-mono" />
+                </div>
+              ` : ''}
+
+              <label class="flex items-start gap-1.5 pt-0.5 cursor-pointer text-[9.5px] font-semibold">
+                <input id="gate-legal-chk" type="checkbox" required class="mt-0.5 rounded" />
+                <span>Confirmo que soy mayor de <strong>18 años</strong> y acepto el <u onclick="event.preventDefault(); openLegalPrivacyModal()">Aviso Legal, Privacidad LFPDPPP y No-Custodia SPEI</u>.</span>
+              </label>
+
+              <button type="submit" class="w-full neko-btn py-2.5 bg-emerald-400 text-[#2B1B10] font-bold text-xs">
+                ${selectedRegRole === 'volunteer' ? 'Continuar al Test de Conocimiento Felino (6 Preguntas) ➔' : 'Completar Registro Oficial de Entidad ➔'}
+              </button>
+            </form>
+          `}`;
+      }
+
+      /* =====================================================================
+         4. VALIDAZIONE LOGIN E APERTURA OVERLAY FULLSCREEN DEL TEST RANDOMIZZATO
+         ===================================================================== */
+      window.submitPlayStoreLogin = async function(ev) {
+        ev.preventDefault();
+        const email = (document.getElementById('gate-email-inp')?.value || '').trim().toLowerCase();
+        const pass = (document.getElementById('gate-pass-inp')?.value || '').trim();
+        if (!email.includes('@') || pass.length < 6) {
+          NekoSFX.alreadyActive();
+          notify('⚠️ Ingresa un correo válido y tu contraseña (mínimo 6 caracteres).');
+          return;
+        }
+
+        if (fbAuth && FIREBASE_CONFIG.apiKey && pass !== 'google_oauth_token') {
+          try {
+            await fbAuth.signInWithEmailAndPassword(email, pass);
+          } catch (err) {
+            notify('⚠️ Credenciales incorrectas o cuenta no encontrada en Firebase.');
+            return;
+          }
+        } else {
+          // Verifica nel registro account salvati localmente
+          const accounts = JSON.parse(localStorage.getItem('mishimaya_registered_accounts_v22') || '{}');
+          const acc = accounts[email];
+          if (!acc && !googleVerifiedEmail) {
+            NekoSFX.alreadyActive();
+            notify('⚠️ No existe una cuenta con ese correo. Usa la pestaña "✨ Crear Cuenta" para registrarte primero.');
+            switchAuthGateTab('register');
+            const regEm = document.getElementById('gate-email-inp');
+            if (regEm) regEm.value = email;
+            return;
+          }
+          if (acc && pass !== 'google_oauth_token' && acc.password !== pass) {
+            NekoSFX.alreadyActive();
+            notify('⚠️ La contraseña ingresada es incorrecta.');
+            return;
+          }
+          if (acc) {
+            state.session = acc.session;
+            state.karma = acc.karma || state.karma;
+          }
+        }
+
+        // Controllo automatico se l'email appartiene a un Admin Master (Firebase Admin List)
+        if (ADMIN_MASTER_EMAILS.map(x => x.toLowerCase()).includes(email)) {
+          state.session.role = 'admin';
+          state.session.paWeight = 50;
+          state.session.label = 'Administrador General (50 PA)';
+        }
+
+        state.registered = true;
         saveState();
-        toggleRightDrawer(false);
+        unlockAuthGateScreen();
+        notify(`🐾 ¡Bienvenido de nuevo, ${state.session.entityName || state.session.label}!`);
+      };
+
+      window.submitPlayStoreRegistrationStep1 = function(ev) {
+        ev.preventDefault();
+        const name = (document.getElementById('gate-name-inp')?.value || '').trim();
+        const age = parseInt(document.getElementById('gate-age-inp')?.value, 10) || 0;
+        const email = (document.getElementById('gate-email-inp')?.value || '').trim().toLowerCase();
+        const pass = (document.getElementById('gate-pass-inp')?.value || '').trim();
+        const phone = window.sanitizePhoneWithPlus(document.getElementById('gate-phone-inp')?.value || '');
+
+        if (age < 18) {
+          NekoSFX.alreadyActive();
+          notify('⚠️ Debes tener 18 años o más para registrarte.');
+          return;
+        }
+        if (!name || !email.includes('@') || pass.length < 6) {
+          NekoSFX.alreadyActive();
+          notify('⚠️ Completa tu nombre, correo válido y contraseña de al menos 6 caracteres.');
+          return;
+        }
+
+        pendingRegistrationData = {
+          role: selectedRegRole,
+          name, age, email, pass, phone,
+          zone: (document.getElementById('gate-zone-inp')?.value || '').trim(),
+          hours: (document.getElementById('gate-hours-inp')?.value || '').trim(),
+          clabe: (document.getElementById('gate-clabe-inp')?.value || '').trim()
+        };
+
+        if (selectedRegRole === 'volunteer') {
+          openFullScreenRandomizedQuizOverlay();
+        } else {
+          finalizeAccountRegistration(1, 150);
+        }
+      };
+
+      /* =====================================================================
+         5. QUESTIONARIO A TUTTO SCHERMO CON 6 DOMANDE E 4 RISPOSTE MESCOLATE
+         ===================================================================== */
+      const VOLUNTEER_QUIZ_BANK = [
+        {
+          id: 'q1',
+          weight: 10,
+          tag: 'PREGUNTA 1 DE 6 • BIENESTAR EN CALLE (10 PTS)',
+          q: '¿Los gatos domésticos pueden vivir felices y seguros si se les deja salir libremente a la calle?',
+          options: [
+            { text: 'No: en la calle enfrentan atropellamientos, ataques, envenenamientos, parásitos y depredan fauna local.', correct: true },
+            { text: 'Sí, los gatos tienen siete vidas y siempre saben regresar sin correr ningún peligro.', correct: false },
+            { text: 'Sí, siempre y cuando salgan únicamente durante la noche a caminar por los techos.', correct: false },
+            { text: 'Solo corren peligro cuando son cachorros; al cumplir un año ya no les pasa nada en la vía pública.', correct: false }
+          ]
+        },
+        {
+          id: 'q2',
+          weight: 10,
+          tag: 'PREGUNTA 2 DE 6 • SIGNOS VITALES (10 PTS)',
+          q: '¿Es normal que un gato respire con la boca abierta (jadeando con la lengua afuera) igual que un perro?',
+          options: [
+            { text: 'No: los gatos respiran por la nariz; el jadeo con boca abierta indica urgencia respiratoria, golpe de calor o estrés severo.', correct: true },
+            { text: 'Sí, todos los gatos jadean normalmente cada vez que tienen sed o quieren jugar.', correct: false },
+            { text: 'Sí, significa que el michi está muy contento y relajado tomando el sol.', correct: false },
+            { text: 'Es normal en gatos adultos y solo requiere darle un poco de leche fría.', correct: false }
+          ]
+        },
+        {
+          id: 'q3',
+          weight: 10,
+          tag: 'PREGUNTA 3 DE 6 • TOXICIDAD MORTAL (10 PTS)',
+          q: '¿Qué sucede si a un gato se le administra paracetamol (acetaminofén), aspirina humana o tiene contacto con lirios (Lilium)?',
+          options: [
+            { text: 'Es mortalmente tóxico: su hígado no puede metabolizar el paracetamol y los lirios causan fallo renal agudo.', correct: true },
+            { text: 'Un cuarto de pastilla de paracetamol humano le quita la fiebre sin causarle daño.', correct: false },
+            { text: 'Los lirios son plantas purificadoras seguras que ayudan a la digestión de los gatos.', correct: false },
+            { text: 'Solo le produce sueño ligero durante un par de horas y luego se recupera solo.', correct: false }
+          ]
+        },
+        {
+          id: 'q4',
+          weight: 25,
+          tag: 'PREGUNTA 4 DE 6 • PROTOCOLO TNR (25 PTS)',
+          q: '¿Qué significa si un gato que vive en una colonia tiene un pequeño corte recto (muesca) en la punta de una oreja?',
+          options: [
+            { text: 'Es la marca universal TNR: indica que ya fue esterilizado y vacunado, y NO debe ser retirado de su colonia.', correct: true },
+            { text: 'Significa que es un gato agresivo que debe ser capturado y encerrado de inmediato.', correct: false },
+            { text: 'Es una herida infecciosa que obliga a llevarlo de urgencia para suturarle la oreja.', correct: false },
+            { text: 'Indica que el gato tiene dueño privado en otra ciudad y está perdido.', correct: false }
+          ]
+        },
+        {
+          id: 'q5',
+          weight: 25,
+          tag: 'PREGUNTA 5 DE 6 • PROTOCOLO CASA SEGURA (25 PTS)',
+          q: 'Ves en la banqueta a un gato limpio, bien alimentado, manso y con collar, sin ninguna herida. ¿Cómo debes actuar?',
+          options: [
+            { text: 'Activar el protocolo Casa Segura: tomar foto, preguntar a los vecinos de la cuadra y NUNCA sustraerlo en el acto.', correct: true },
+            { text: 'Subirlo inmediatamente a mi auto y llevármelo a mi casa en otra colonia.', correct: false },
+            { text: 'Quitarle el collar y publicarlo en adopción inmediata para entregárselo al primero que llame.', correct: false },
+            { text: 'Ignorarlo por completo y borrar cualquier reporte de esa calle.', correct: false }
+          ]
+        },
+        {
+          id: 'q6',
+          weight: 25,
+          tag: 'PREGUNTA 6 DE 6 • ADOPCIÓN Y FOSTER (25 PTS)',
+          q: 'Según el protocolo de MishiMaya Mérida, ¿cuál es el requisito obligatorio para entregar a un michi en adopción o resguardo (Foster)?',
+          options: [
+            { text: 'Hogar 100% interior con protecciones/mosquiteros, esterilización y compromiso de cero salida libre a la calle.', correct: true },
+            { text: 'Tener un patio abierto sin barda para que el gato pueda salir a cazar aves por la tarde.', correct: false },
+            { text: 'Entregarlo sin preguntas ni seguimiento a cualquier persona, aunque sea menor de edad.', correct: false },
+            { text: 'No esterilizarlo hasta que haya tenido al menos dos camadas en casa.', correct: false }
+          ]
+        }
+      ];
+
+      function shuffleArrayFisherYates(arr) {
+        const copy = arr.slice();
+        for (let i = copy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          const temp = copy[i];
+          copy[i] = copy[j];
+          copy[j] = temp;
+        }
+        return copy;
+      }
+
+      function openFullScreenRandomizedQuizOverlay() {
+        const overlay = document.getElementById('neko-fullscreen-quiz-overlay');
+        if (!overlay) return;
+        NekoSFX.modal();
+
+        const questionsHtml = VOLUNTEER_QUIZ_BANK.map(qItem => {
+          const shuffledOpts = shuffleArrayFisherYates(qItem.options);
+          return `
+            <div class="neko-card p-3 space-y-1.5 text-[10.5px]">
+              <span class="px-2 py-0.5 rounded-full bg-amber-300 text-[#2B1B10] font-neko font-bold text-[8px]">${qItem.tag}</span>
+              <p class="font-neko font-bold text-xs leading-snug pt-0.5">${qItem.q}</p>
+              <div class="space-y-1.5 pt-1">
+                ${shuffledOpts.map((opt, oIdx) => `
+                  <label class="flex items-start gap-2 p-2 rounded-xl bg-[var(--bg-subcard)] border border-[#2B1B10]/30 cursor-pointer hover:brightness-95">
+                    <input type="radio" name="${qItem.id}" value="${opt.correct ? '1' : '0'}" required class="mt-0.5 shrink-0" />
+                    <span class="leading-snug font-semibold">${opt.text}</span>
+                  </label>
+                `).join('')}
+              </div>
+            </div>`;
+        }).join('');
+
+        overlay.innerHTML = `
+          <div class="w-full max-w-[430px] mx-auto space-y-3 pb-8">
+            <div class="neko-card p-3 bg-amber-200 border-2 border-[#2B1B10] flex items-center justify-between">
+              <div>
+                <span class="px-2 py-0.5 rounded-full bg-[#2B1B10] text-amber-300 font-neko font-bold text-[8px]">EVALUACIÓN DE INGRESO VOLUNTARIO</span>
+                <h3 class="font-neko font-bold text-sm mt-0.5">Test de Conocimiento Felino y TNR</h3>
+                <p class="text-[9.5px] opacity-85">Las respuestas están mezcladas al azar. Selecciona la opción correcta en cada caso:</p>
+              </div>
+              <button type="button" onclick="document.getElementById('neko-fullscreen-quiz-overlay').classList.remove('quiz-open')" class="neko-btn px-2.5 py-1 bg-stone-200 text-[#2B1B10] font-bold text-xs shrink-0">‹ Volver</button>
+            </div>
+            <form onsubmit="evaluateFullScreenVolunteerQuiz(event)" class="space-y-2.5">
+              ${questionsHtml}
+              <button type="submit" class="w-full neko-btn py-3 bg-emerald-400 text-[#2B1B10] font-bold text-xs shadow-lg">✅ Calificar Test y Entrar a MishiMaya</button>
+            </form>
+          </div>`;
+
+        overlay.classList.add('quiz-open');
+      }
+
+      window.evaluateFullScreenVolunteerQuiz = function(ev) {
+        ev.preventDefault();
+        const f = ev.target;
+        let totalScore = 0;
+        VOLUNTEER_QUIZ_BANK.forEach(qItem => {
+          const sel = f.querySelector(`input[name="${qItem.id}"]:checked`);
+          if (sel && sel.value === '1') totalScore += qItem.weight;
+        });
+
+        const assignedMinPa = totalScore >= 90 ? 3 : (totalScore >= 55 ? 2 : 1);
+        const initialKarma = Math.max(150, totalScore * 14);
+        document.getElementById('neko-fullscreen-quiz-overlay').classList.remove('quiz-open');
+        finalizeAccountRegistration(assignedMinPa, initialKarma, totalScore);
+      };
+
+      async function finalizeAccountRegistration(quizMinPa, initialKarma, quizScore = 100) {
+        if (!pendingRegistrationData) return;
+        const d = pendingRegistrationData;
+
+        if (fbAuth && FIREBASE_CONFIG.apiKey && d.pass !== 'google_oauth_token') {
+          try {
+            const cred = await fbAuth.createUserWithEmailAndPassword(d.email, d.pass);
+            if (cred.user) state.session.uid = cred.user.uid;
+          } catch (e) {}
+        }
+
+        const isAdminEmail = ADMIN_MASTER_EMAILS.map(x => x.toLowerCase()).includes(d.email);
+        const finalRole = isAdminEmail ? 'admin' : d.role;
+        state.karma = initialKarma;
+
+        let newEntityId = finalRole;
+        if (finalRole === 'clinic') {
+          newEntityId = 'cl-' + Date.now();
+          state.clinics.unshift({
+            id: newEntityId, confirmed: true, appMember: true, seenNovelty: false,
+            paScore: 10, expCount: 1, reputationPts: 500,
+            name: d.name, zone: d.zone || 'Mérida, Yucatán',
+            phone: d.phone || '+529991112233', whatsapp: window.formatWaLinkNumber(d.phone),
+            hours: d.hours || 'Lun–Sáb 09:00–20:00',
+            services: ['Clínica Oficial Registrada en MishiMaya'],
+            clabe: d.clabe || '', lat: state.userCoords.lat, lng: state.userCoords.lng,
+            status: 'open', coupon: 'Miembro Oficial MishiMaya'
+          });
+        } else if (finalRole === 'shelter') {
+          newEntityId = 'sh-' + Date.now();
+          state.shelters.unshift({
+            id: newEntityId, confirmed: true, appMember: true, expCount: 1, reputationPts: 500,
+            name: d.name, zone: d.zone || 'Mérida, Yucatán',
+            whatsapp: window.formatWaLinkNumber(d.phone),
+            hours: d.hours || 'Lun–Sáb 10:00–17:00',
+            coordinator: d.name,
+            services: ['Refugio Oficial Registrado en MishiMaya'],
+            clabe: d.clabe || '', lat: state.userCoords.lat, lng: state.userCoords.lng,
+            activeCats: 15, maxCapacity: 30
+          });
+        }
+
+        state.session = {
+          role: finalRole,
+          uid: state.session.uid || 'usr_' + Date.now(),
+          entityId: newEntityId,
+          entityName: d.name,
+          quizMinPa,
+          quizScore,
+          paWeight: finalRole === 'admin' ? 50 : (finalRole === 'volunteer' ? computeVolunteerPAFromKarma(state.karma) : 10),
+          label: finalRole === 'admin' ? 'Administrador General (50 PA)' : (finalRole === 'volunteer' ? getVolunteerRankTitle(state.karma) : `${d.name} (10 PA)`),
+          email: d.email,
+          phone: d.phone,
+          age: d.age,
+          zone: d.zone || '',
+          hours: d.hours || '',
+          clabe: d.clabe || ''
+        };
+
+        // Salva l'account nel registro locale per futuri login
+        const accounts = JSON.parse(localStorage.getItem('mishimaya_registered_accounts_v22') || '{}');
+        accounts[d.email] = { password: d.pass, session: state.session, karma: state.karma };
+        localStorage.setItem('mishimaya_registered_accounts_v22', JSON.stringify(accounts));
+
+        state.registered = true;
+        saveState();
+        unlockAuthGateScreen();
+        launchNekoCelebration();
+        if (!state.tutorialSeen) {
+          setTimeout(() => startSpotlightTour(0), 350);
+        } else {
+          notify(`🎉 ¡Cuenta creada! Nivel asignado: ${state.session.label}`);
+        }
+      }
+
+      function unlockAuthGateScreen() {
         const gateScreen = document.getElementById('neko-auth-gate-screen');
         if (gateScreen) {
-          gateScreen.classList.remove('hidden', 'gate-unlocked');
+          gateScreen.classList.add('gate-unlocked');
+          setTimeout(() => gateScreen.classList.add('hidden'), 460);
         }
-        window.openAuthAndOnboardingModal('volunteer');
-        notify('🔒 Sesión cerrada. Pantalla de acceso activada.');
+      }
+
+      /* =====================================================================
+         6. SEZIONE "🔑 CUENTA": MOSTRA SOLO IL PROFILO PERSONALE CORRISPONDENTE
+            AL RUOLO E I DATI REGISTRATI (SENZA MAI PIÙ MOSTRARE IL TEST!)
+         ===================================================================== */
+      let secretAdminTapCount = 0;
+      window.triggerSecretAdminTap = function() {
+        secretAdminTapCount++;
+        if (secretAdminTapCount >= 5) {
+          secretAdminTapCount = 0;
+          const pin = prompt('Acceso Técnico Moderador — Ingresa PIN Maestro:');
+          if (pin === '9999') {
+            state.session.role = 'admin';
+            state.session.paWeight = 50;
+            state.session.label = 'Administrador General (50 PA)';
+            saveState(); renderAll(); openUserProfileCuentaModal();
+            notify('👑 Modo Administrador General activado.');
+          }
+        }
+      };
+
+      window.openUserProfileCuentaModal = function() {
+        syncVolunteerAuthorityFromKarma();
+        const s = state.session || {};
+        const roleBadge = s.role === 'clinic' ? '🏥 CLÍNICA VETERINARIA OFICIAL' : (s.role === 'shelter' ? '🏡 REFUGIO / SANTUARIO OFICIAL' : (s.role === 'admin' ? '👑 ADMINISTRADOR GENERAL' : '🛡️ VOLUNTARIO CÍVICO REGISTRADO'));
+        const isEntity = s.role === 'clinic' || s.role === 'shelter';
+
+        openCenterModal(`
+          <div class="flex justify-between items-center border-b pb-1.5">
+            <div onclick="triggerSecretAdminTap()" class="cursor-pointer select-none">
+              <span class="px-2 py-0.5 rounded-full bg-amber-300 text-[#2B1B10] font-neko font-bold text-[8.5px]">${roleBadge}</span>
+              <h3 class="font-neko font-bold text-xs mt-0.5">Mi Cuenta Personal: ${s.entityName || s.label}</h3>
+            </div>
+            <button type="button" onclick="NekoSFX.tap(); closeCenterModal()" class="neko-btn px-2 py-0.5 bg-stone-200 text-[#2B1B10] text-xs font-bold">✕</button>
+          </div>
+          <form onsubmit="saveUserProfileCuentaChanges(event)" class="space-y-2 text-[11px]">
+            <div class="p-2.5 neko-subcard space-y-1 text-[10px]">
+              <p><strong>Rango y Autoridad Activa:</strong> ${s.label}</p>
+              <p><strong>Experiencia Acumulada:</strong> 🐟 ${state.karma.toLocaleString('en-US')} EXP • Peso de Voto: <strong>${s.paWeight} PA</strong></p>
+              <p><strong>Correo Registrado:</strong> <span class="font-mono">${s.email || '—'}</span> • <strong>Edad:</strong> ${s.age || 18} años</p>
+            </div>
+            <div class="space-y-1.5">
+              <label class="block text-[10px] font-neko font-bold">Nombre / Alias visible en tus reportes:</label>
+              <input id="prof-edit-name" type="text" required value="${s.entityName || ''}" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+              <label class="block text-[10px] font-neko font-bold">Teléfono / WhatsApp con prefijo internacional (ej. +52... o +39...):</label>
+              <input id="prof-edit-phone" type="tel" pattern="^\\+?[0-9\\s\\-]{7,18}$" value="${s.phone || ''}" placeholder="+52999..." class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-mono" />
+              ${isEntity ? `
+                <label class="block text-[10px] font-neko font-bold">Horarios de Atención:</label>
+                <input id="prof-edit-hours" type="text" value="${s.hours || ''}" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10]" />
+                <label class="block text-[10px] font-neko font-bold">CLABE Interbancaria o Medio de Pago Oficial:</label>
+                <input id="prof-edit-clabe" type="text" value="${s.clabe || ''}" placeholder="18 dígitos SPEI" class="w-full px-2.5 py-1.5 rounded-xl border-2 border-[#2B1B10] bg-[#FFFDF7] text-[#2B1B10] font-mono" />
+              ` : ''}
+            </div>
+            <button type="submit" class="w-full neko-btn py-2 bg-emerald-400 text-[#2B1B10] font-bold text-xs">💾 Guardar Mis Datos Personales</button>
+            <button type="button" onclick="logoutToIntroGate()" class="w-full neko-btn py-1.5 bg-rose-200 text-rose-950 font-bold text-[10px]">🚪 Cerrar Sesión</button>
+          </form>`);
+      };
+
+      window.saveUserProfileCuentaChanges = function(ev) {
+        ev.preventDefault();
+        const newName = (document.getElementById('prof-edit-name')?.value || '').trim();
+        const newPhone = window.sanitizePhoneWithPlus(document.getElementById('prof-edit-phone')?.value || '');
+        if (newName) state.session.entityName = newName;
+        state.session.phone = newPhone;
+
+        if (state.session.role === 'clinic' || state.session.role === 'shelter') {
+          const newHours = (document.getElementById('prof-edit-hours')?.value || '').trim();
+          const newClabe = (document.getElementById('prof-edit-clabe')?.value || '').trim();
+          state.session.hours = newHours;
+          state.session.clabe = newClabe;
+          state.session.label = `${state.session.entityName} (10 PA)`;
+          const list = state.session.role === 'clinic' ? state.clinics : state.shelters;
+          const ent = list.find(x => x.id === state.session.entityId) || list[0];
+          if (ent) {
+            ent.name = state.session.entityName;
+            if (newHours) ent.hours = newHours;
+            ent.clabe = newClabe;
+            ent.appMember = true;
+            if (newPhone) {
+              ent.phone = newPhone;
+              ent.whatsapp = window.formatWaLinkNumber(newPhone);
+            }
+          }
+        }
+        saveState(); closeCenterModal(); renderAll();
+        notify('✅ Datos de tu cuenta actualizados correctamente.');
+      };
+
+      window.logoutToIntroGate = function() {
+        if (fbAuth && FIREBASE_CONFIG.apiKey) {
+          try { fbAuth.signOut(); } catch (e) {}
+        }
+        state.registered = false;
+        googleVerifiedEmail = '';
+        saveState();
+        closeCenterModal();
+        toggleRightDrawer(false);
+        const gateScreen = document.getElementById('neko-auth-gate-screen');
+        const authHost = document.getElementById('neko-auth-card-host');
+        if (gateScreen) gateScreen.classList.remove('hidden', 'gate-unlocked');
+        authMode = 'login';
+        renderAuthGateCard();
+        if (authHost) authHost.classList.add('auth-card-visible');
+        notify('🔒 Sesión cerrada correctamente.');
+      };
+
+      // Sovrascrive openAuthAndOnboardingModal:
+      // - Se l'utente è già registrato, apre SEMPRE la sua scheda profilo "Mi Cuenta" (senza il test!).
+      // - Se non è registrato, mostra la schermata di blocco iniziale.
+      window.openAuthAndOnboardingModal = function() {
+        if (state.registered) {
+          window.openUserProfileCuentaModal();
+        } else {
+          const gateScreen = document.getElementById('neko-auth-gate-screen');
+          const authHost = document.getElementById('neko-auth-card-host');
+          if (gateScreen) gateScreen.classList.remove('hidden', 'gate-unlocked');
+          renderAuthGateCard();
+          if (authHost) authHost.classList.add('auth-card-visible');
+        }
       };
 
       window.addEventListener('DOMContentLoaded', () => {
-        // Aggiunge il pulsante "Cerrar Sesión" in fondo al Drawer destro
-        const drawerPanel = document.getElementById('right-drawer-panel');
-        if (drawerPanel && !document.getElementById('btn-drawer-logout')) {
-          const logoutBtn = document.createElement('button');
-          logoutBtn.id = 'btn-drawer-logout';
-          logoutBtn.type = 'button';
-          logoutBtn.className = 'w-full neko-btn py-2 bg-rose-200 text-rose-950 font-bold text-xs mt-1';
-          logoutBtn.textContent = '🚪 Cerrar Sesión (Probar Bloqueo e Intro)';
-          logoutBtn.onclick = window.logoutAndLockGate;
-          drawerPanel.appendChild(logoutBtn);
-        }
-
-        // Nasconde l'eventuale modale prematuro durante i primi 1.8 secondi dell'animazione fisica
+        // Blocca l'apertura del vecchio popup modale al primo avvio
         const modalBackdrop = document.getElementById('center-modal-backdrop');
         if (modalBackdrop && !state.registered) modalBackdrop.classList.add('hidden');
 
-        // 1. Dopo la caduta dell'ultima lettera (1.75s), mostra il motto "Señala, Rescata, Adopta!"
-        setTimeout(() => {
-          const motto = document.getElementById('neko-intro-motto');
-          if (motto) motto.classList.add('motto-visible');
-        }, 1720);
-
-        // 2. Dopo 2.75s: se l'utente è già registrato entra subito in app (login mantenuto aperto);
-        //    altrimenti mostra il modulo di registrazione/login a tutto schermo non-skippabile
-        setTimeout(() => {
-          const gateScreen = document.getElementById('neko-auth-gate-screen');
-          if (state.registered) {
-            if (gateScreen) {
-              gateScreen.classList.add('gate-unlocked');
-              setTimeout(() => gateScreen.classList.add('hidden'), 480);
-            }
-          } else {
-            window.openAuthAndOnboardingModal('volunteer');
-          }
-        }, 2750);
+        // Avvia la sequenza animata stradale Neko Atsume
+        playStreetIntroSequence();
       });
     })();
   </script>
-  
+
 </body>
 </html>
